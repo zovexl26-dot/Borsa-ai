@@ -1,0 +1,25 @@
+{
+  "name": "borsa-ai",
+  "version": "1.0.0",
+  "description": "Borsa AI - Temel & Teknik Analiz, Haber & AI Chat",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.2",
+    "cors": "^2.8.5",
+    "rss-parser": "^3.13.0",
+    "node-cache": "^5.1.2",
+    "dotenv": "^16.3.1",
+    "@anthropic-ai/sdk": "^0.20.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
