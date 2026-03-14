@@ -4,220 +4,200 @@ const axios = require('axios');
 const cors = require('cors');
 const path = require('path');
 const NodeCache = require('node-cache');
-const RSSParser = require('rss-parser');
 const Anthropic = require('@anthropic-ai/sdk');
 
 const app = express();
-const cache = new NodeCache({ stdTTL: 300 }); // 5 dakika cache
-const rssParser = new RSSParser();
+const cache = new NodeCache({ stdTTL: 300 });
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
-// ─── YARDIMCI FONKSİYONLAR ───────────────────────────────────────────────────
-
 function cacheGet(key) { return cache.get(key); }
 function cacheSet(key, val) { cache.set(key, val); }
 
-// Yahoo Finance'dan hisse verisi
 async function fetchYahooData(symbol) {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1y`;
-  const headers = { 'User-Agent': 'Mozilla/5.0' };
-  const res = await axios.get(url, { headers, timeout: 10000 });
+  const res = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 10000 });
   return res.data;
 }
 
-// Yahoo Finance fundamentals
 async function fetchFundamentals(symbol) {
-  const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=financialData,defaultKeyStatistics,summaryDetail,assetProfile`;
-  const headers = { 'User-Agent': 'Mozilla/5.0' };
-  const res = await axios.get(url, { headers, timeout: 10000 });
-  return res.data;
-}
-
-// KAP RSS haberleri
-async function fetchKAPNews() {
+  const headers = { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' };
   try {
-    const feed = await rssParser.parseURL('https://www.kap.org.tr/tr/rss/bildirim');
-    return feed.items.slice(0, 30).map(item => ({
-      title: item.title,
-      date: item.pubDate,
-      link: item.link,
-      company: item.title?.split(' ')[0] || '',
-    }));
-  } catch (e) {
-    // KAP erişilemezse örnek veri
-    return [];
+    const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=financialData,defaultKeyStatistics,summaryDetail,assetProfile`;
+    const res = await axios.get(url, { headers, timeout: 10000 });
+    return res.data;
+  } catch(e) {
+    const url2 = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=financialData,defaultKeyStatistics,summaryDetail,assetProfile`;
+    const res = await axios.get(url2, { headers, timeout: 10000 });
+    return res.data;
   }
 }
 
-// Sektör karşılaştırma verileri (Türk hisseleri)
+async function fetchKAPNews(symbol) {
+  const results = [];
+  const shortSymbol = symbol ? symbol.replace('.IS', '') : '';
+  try {
+    const kapUrl = 'https://www.kap.org.tr/tr/rss/bildirim';
+    const res = await axios.get(kapUrl, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 8000, responseType: 'text' });
+    const xml = res.data;
+    const items = xml.match(/<item>([\s\S]*?)<\/item>/g) || [];
+    for (const item of items.slice(0, 25)) {
+      const title = (item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) || item.match(/<title>(.*?)<\/title>/))?.[1] || '';
+      const link = item.match(/<link>(.*?)<\/link>/)?.[1] || '';
+      const pubDate = item.match(/<pubDate>(.*?)<\/pubDate>/)?.[1] || '';
+      if (title) results.push({ title, link, date: pubDate, company: shortSymbol });
+    }
+  } catch(e) {
+    console.log('KAP hatasi:', e.message);
+  }
+
+  if (results.length === 0 && symbol) {
+    try {
+      const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${symbol}&newsCount=10&quotesCount=0`;
+      const res = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, timeout: 8000 });
+      const news = res.data?.news || [];
+      for (const n of news) {
+        results.push({ title: n.title, link: n.link, date: new Date(n.providerPublishTime * 1000).toISOString(), company: shortSymbol });
+      }
+    } catch(e) { console.log('Yahoo haber hatasi:', e.message); }
+  }
+  return results;
+}
+
 const SECTOR_BENCHMARKS = {
-  'Bankacılık': { fk: 6.5, pddd: 0.85, roe: 13 },
+  'Bankacilik': { fk: 6.5, pddd: 0.85, roe: 13 },
   'Holding': { fk: 8.0, pddd: 0.6, roe: 10 },
   'Perakende': { fk: 12.0, pddd: 2.1, roe: 17 },
   'Enerji': { fk: 9.5, pddd: 1.2, roe: 12 },
   'Teknoloji': { fk: 18.0, pddd: 3.5, roe: 20 },
-  'İnşaat': { fk: 7.0, pddd: 1.0, roe: 14 },
-  'Sağlık': { fk: 14.0, pddd: 2.8, roe: 18 },
-  'Gıda': { fk: 10.0, pddd: 1.5, roe: 15 },
+  'Insaat': { fk: 7.0, pddd: 1.0, roe: 14 },
+  'Saglik': { fk: 14.0, pddd: 2.8, roe: 18 },
+  'Gida': { fk: 10.0, pddd: 1.5, roe: 15 },
   'Genel': { fk: 10.0, pddd: 1.5, roe: 14 },
 };
 
-// Teknik göstergeler hesaplama
+const MANUAL_FUNDAMENTALS = {
+  'THYAO.IS': { sector: 'Ulasim', fk: 4.2, pddd: 1.8, roe: 42, ros: 18, beta: 1.2 },
+  'GARAN.IS': { sector: 'Bankacilik', fk: 5.1, pddd: 0.9, roe: 18, ros: 22, beta: 1.1 },
+  'AKBNK.IS': { sector: 'Bankacilik', fk: 4.8, pddd: 0.8, roe: 16, ros: 20, beta: 1.0 },
+  'EREGL.IS': { sector: 'Metal', fk: 6.3, pddd: 1.1, roe: 17, ros: 14, beta: 0.9 },
+  'ASELS.IS': { sector: 'Savunma', fk: 22.0, pddd: 4.2, roe: 19, ros: 12, beta: 0.8 },
+  'KCHOL.IS': { sector: 'Holding', fk: 7.5, pddd: 0.7, roe: 9, ros: 8, beta: 1.0 },
+  'BIMAS.IS': { sector: 'Perakende', fk: 14.0, pddd: 8.5, roe: 60, ros: 4, beta: 0.7 },
+  'TCELL.IS': { sector: 'Teknoloji', fk: 9.2, pddd: 2.1, roe: 23, ros: 16, beta: 0.6 },
+  'SISE.IS':  { sector: 'Holding', fk: 6.8, pddd: 0.9, roe: 13, ros: 11, beta: 1.1 },
+  'PGSUS.IS': { sector: 'Ulasim', fk: 5.5, pddd: 2.2, roe: 40, ros: 15, beta: 1.3 },
+};
+
 function calcRSI(closes, period = 14) {
   if (closes.length < period + 1) return null;
   let gains = 0, losses = 0;
   for (let i = closes.length - period; i < closes.length; i++) {
     const diff = closes[i] - closes[i - 1];
-    if (diff > 0) gains += diff;
-    else losses += Math.abs(diff);
+    if (diff > 0) gains += diff; else losses += Math.abs(diff);
   }
-  const avgGain = gains / period;
-  const avgLoss = losses / period;
+  const avgGain = gains / period, avgLoss = losses / period;
   if (avgLoss === 0) return 100;
-  const rs = avgGain / avgLoss;
-  return Math.round(100 - (100 / (1 + rs)));
+  return Math.round(100 - (100 / (1 + avgGain / avgLoss)));
 }
 
 function calcSMA(closes, period) {
   if (closes.length < period) return null;
-  const slice = closes.slice(-period);
-  return slice.reduce((a, b) => a + b, 0) / period;
-}
-
-function calcMACD(closes) {
-  if (closes.length < 26) return { macd: null, signal: null, histogram: null };
-  const ema12 = calcEMA(closes, 12);
-  const ema26 = calcEMA(closes, 26);
-  const macdLine = ema12 - ema26;
-  return { macd: macdLine.toFixed(2), histogram: macdLine.toFixed(2) };
+  return closes.slice(-period).reduce((a, b) => a + b, 0) / period;
 }
 
 function calcEMA(closes, period) {
   const k = 2 / (period + 1);
   let ema = closes.slice(0, period).reduce((a, b) => a + b, 0) / period;
-  for (let i = period; i < closes.length; i++) {
-    ema = closes[i] * k + ema * (1 - k);
-  }
+  for (let i = period; i < closes.length; i++) ema = closes[i] * k + ema * (1 - k);
   return ema;
+}
+
+function calcMACD(closes) {
+  if (closes.length < 26) return { macd: null };
+  return { macd: (calcEMA(closes, 12) - calcEMA(closes, 26)).toFixed(2) };
 }
 
 function calcBollingerBands(closes, period = 20) {
   if (closes.length < period) return null;
   const slice = closes.slice(-period);
   const sma = slice.reduce((a, b) => a + b, 0) / period;
-  const variance = slice.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / period;
-  const std = Math.sqrt(variance);
+  const std = Math.sqrt(slice.reduce((a, b) => a + Math.pow(b - sma, 2), 0) / period);
   return { upper: (sma + 2 * std).toFixed(2), middle: sma.toFixed(2), lower: (sma - 2 * std).toFixed(2) };
 }
 
-// ─── RATING HESAPLA ──────────────────────────────────────────────────────────
-
 function calculateRating(fundamental, technical, sentiment) {
   let score = 0;
-  let details = [];
-
-  // Temel analiz skoru (40 puan)
+  const details = [];
   if (fundamental) {
     const { fk, pddd, roe, sector } = fundamental;
     const bench = SECTOR_BENCHMARKS[sector] || SECTOR_BENCHMARKS['Genel'];
-
     if (fk && fk > 0) {
-      const fkScore = fk < bench.fk * 0.7 ? 12 : fk < bench.fk ? 8 : fk < bench.fk * 1.5 ? 4 : 0;
-      score += fkScore;
-      details.push({ label: 'F/K oranı', score: fkScore, max: 12, note: `${fk.toFixed(1)}x (sektör: ${bench.fk}x)` });
+      const s = fk < bench.fk * 0.7 ? 12 : fk < bench.fk ? 8 : fk < bench.fk * 1.5 ? 4 : 0;
+      score += s;
+      details.push({ label: 'F/K orani', score: s, max: 12, note: `${fk.toFixed(1)}x (sektor: ${bench.fk}x)` });
     }
     if (pddd && pddd > 0) {
-      const pdScore = pddd < bench.pddd * 0.6 ? 12 : pddd < bench.pddd ? 8 : pddd < bench.pddd * 1.5 ? 4 : 0;
-      score += pdScore;
-      details.push({ label: 'PD/DD oranı', score: pdScore, max: 12, note: `${pddd.toFixed(2)}x (sektör: ${bench.pddd}x)` });
+      const s = pddd < bench.pddd * 0.6 ? 12 : pddd < bench.pddd ? 8 : pddd < bench.pddd * 1.5 ? 4 : 0;
+      score += s;
+      details.push({ label: 'PD/DD orani', score: s, max: 12, note: `${pddd.toFixed(2)}x (sektor: ${bench.pddd}x)` });
     }
     if (roe && roe > 0) {
-      const roeScore = roe > bench.roe * 1.3 ? 16 : roe > bench.roe ? 12 : roe > bench.roe * 0.7 ? 6 : 0;
-      score += roeScore;
-      details.push({ label: 'ROE', score: roeScore, max: 16, note: `${roe.toFixed(1)}% (sektör: ${bench.roe}%)` });
+      const s = roe > bench.roe * 1.3 ? 16 : roe > bench.roe ? 12 : roe > bench.roe * 0.7 ? 6 : 0;
+      score += s;
+      details.push({ label: 'ROE', score: s, max: 16, note: `${roe.toFixed(1)}% (sektor: ${bench.roe}%)` });
     }
   }
-
-  // Teknik analiz skoru (35 puan)
   if (technical) {
-    const { rsi, macd, trend } = technical;
-    if (rsi !== null) {
-      const rsiScore = rsi >= 30 && rsi <= 70 ? 15 : rsi < 30 ? 12 : 5;
-      score += rsiScore;
-      details.push({ label: 'RSI', score: rsiScore, max: 15, note: `${rsi} (${rsi < 30 ? 'Aşırı satım' : rsi > 70 ? 'Aşırı alım' : 'Nötr bölge'})` });
+    const { rsi, trend } = technical;
+    if (rsi != null) {
+      const s = rsi >= 30 && rsi <= 70 ? 15 : rsi < 30 ? 12 : 5;
+      score += s;
+      details.push({ label: 'RSI', score: s, max: 15, note: `${rsi} (${rsi < 30 ? 'Asiri satim' : rsi > 70 ? 'Asiri alim' : 'Notr bolge'})` });
     }
     if (trend) {
-      const tScore = trend === 'yukari' ? 20 : trend === 'yatay' ? 10 : 2;
-      score += tScore;
-      details.push({ label: 'Trend', score: tScore, max: 20, note: trend === 'yukari' ? 'Yükselen trend' : trend === 'yatay' ? 'Yatay seyir' : 'Düşen trend' });
+      const s = trend === 'yukari' ? 20 : trend === 'yatay' ? 10 : 2;
+      score += s;
+      details.push({ label: 'Trend', score: s, max: 20, note: trend === 'yukari' ? 'Yukselen trend' : trend === 'yatay' ? 'Yatay seyir' : 'Dusen trend' });
     }
   }
-
-  // Haber sentimant skoru (25 puan)
   if (sentiment !== undefined) {
-    const sentScore = sentiment > 0.3 ? 25 : sentiment > 0 ? 18 : sentiment > -0.3 ? 10 : 2;
-    score += sentScore;
-    details.push({ label: 'Haber sentimantı', score: sentScore, max: 25, note: sentiment > 0.3 ? 'Pozitif haberler' : sentiment < -0.3 ? 'Negatif haberler' : 'Nötr haberler' });
+    const s = sentiment > 0.3 ? 25 : sentiment > 0 ? 18 : sentiment > -0.3 ? 10 : 2;
+    score += s;
+    details.push({ label: 'Haber sentimanti', score: s, max: 25, note: sentiment > 0.3 ? 'Pozitif haberler' : sentiment < -0.3 ? 'Negatif haberler' : 'Notr haberler' });
   }
-
-  const grade = score >= 75 ? 'GÜÇLÜ AL' : score >= 55 ? 'AL' : score >= 35 ? 'BEKLE' : score >= 20 ? 'SAT' : 'GÜÇLÜ SAT';
+  const grade = score >= 75 ? 'GUCLU AL' : score >= 55 ? 'AL' : score >= 35 ? 'BEKLE' : score >= 20 ? 'SAT' : 'GUCLU SAT';
   const color = score >= 75 ? '#22c55e' : score >= 55 ? '#86efac' : score >= 35 ? '#fbbf24' : score >= 20 ? '#f87171' : '#ef4444';
-
   return { score, grade, color, details, maxScore: 100 };
 }
 
-// ─── API ROUTES ───────────────────────────────────────────────────────────────
-
-// Hisse fiyat + teknik analiz
 app.get('/api/stock/:symbol', async (req, res) => {
   const symbol = req.params.symbol.toUpperCase();
-  const cacheKey = `stock_${symbol}`;
-  const cached = cacheGet(cacheKey);
+  const cached = cacheGet(`stock_${symbol}`);
   if (cached) return res.json(cached);
-
   try {
     const data = await fetchYahooData(symbol);
     const chart = data.chart?.result?.[0];
-    if (!chart) return res.status(404).json({ error: 'Hisse bulunamadı' });
-
-    const closes = chart.indicators?.quote?.[0]?.close?.filter(Boolean) || [];
+    if (!chart) return res.status(404).json({ error: 'Hisse bulunamadi' });
+    const closes = chart.indicators?.quote?.[0]?.close?.filter(v => v != null) || [];
     const timestamps = chart.timestamp || [];
-    const volumes = chart.indicators?.quote?.[0]?.volume?.filter(Boolean) || [];
-    const opens = chart.indicators?.quote?.[0]?.open?.filter(Boolean) || [];
-    const highs = chart.indicators?.quote?.[0]?.high?.filter(Boolean) || [];
-    const lows = chart.indicators?.quote?.[0]?.low?.filter(Boolean) || [];
-
+    const volumes = chart.indicators?.quote?.[0]?.volume?.filter(v => v != null) || [];
     const currentPrice = closes[closes.length - 1];
     const prevClose = closes[closes.length - 2];
     const change = currentPrice - prevClose;
     const changePercent = (change / prevClose) * 100;
-
-    const sma20 = calcSMA(closes, 20);
-    const sma50 = calcSMA(closes, 50);
-    const sma200 = calcSMA(closes, 200);
-    const rsi = calcRSI(closes);
-    const macd = calcMACD(closes);
-    const bb = calcBollingerBands(closes);
-
-    // Trend belirleme
+    const sma20 = calcSMA(closes, 20), sma50 = calcSMA(closes, 50), sma200 = calcSMA(closes, 200);
+    const rsi = calcRSI(closes), macd = calcMACD(closes), bb = calcBollingerBands(closes);
     let trend = 'yatay';
-    if (sma20 && sma50 && sma200) {
-      if (currentPrice > sma20 && sma20 > sma50 && sma50 > sma200) trend = 'yukari';
-      else if (currentPrice < sma20 && sma20 < sma50) trend = 'asagi';
-    }
-
+    if (sma20 && sma50 && currentPrice > sma20 && sma20 > sma50) trend = 'yukari';
+    else if (sma20 && sma50 && currentPrice < sma20 && sma20 < sma50) trend = 'asagi';
     const result = {
-      symbol,
-      currentPrice: currentPrice?.toFixed(2),
-      change: change?.toFixed(2),
-      changePercent: changePercent?.toFixed(2),
-      volume: volumes[volumes.length - 1],
-      high52w: Math.max(...closes).toFixed(2),
-      low52w: Math.min(...closes).toFixed(2),
+      symbol, currentPrice: currentPrice?.toFixed(2), change: change?.toFixed(2),
+      changePercent: changePercent?.toFixed(2), volume: volumes[volumes.length - 1],
+      high52w: Math.max(...closes).toFixed(2), low52w: Math.min(...closes).toFixed(2),
       technical: { rsi, macd, sma20: sma20?.toFixed(2), sma50: sma50?.toFixed(2), sma200: sma200?.toFixed(2), bb, trend },
       chart: {
         dates: timestamps.slice(-60).map(t => new Date(t * 1000).toLocaleDateString('tr-TR')),
@@ -225,223 +205,128 @@ app.get('/api/stock/:symbol', async (req, res) => {
         volumes: volumes.slice(-60),
       },
     };
-
-    cacheSet(cacheKey, result);
+    cacheSet(`stock_${symbol}`, result);
     res.json(result);
-  } catch (e) {
-    console.error('Stock error:', e.message);
-    res.status(500).json({ error: e.message });
-  }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Temel analiz verileri
 app.get('/api/fundamentals/:symbol', async (req, res) => {
   const symbol = req.params.symbol.toUpperCase();
-  const cacheKey = `fund_${symbol}`;
-  const cached = cacheGet(cacheKey);
+  const cached = cacheGet(`fund_${symbol}`);
   if (cached) return res.json(cached);
-
+  let result = null;
   try {
     const data = await fetchFundamentals(symbol);
     const summary = data.quoteSummary?.result?.[0];
-    if (!summary) return res.status(404).json({ error: 'Temel veri bulunamadı' });
+    if (summary) {
+      const fin = summary.financialData || {}, stats = summary.defaultKeyStatistics || {};
+      const detail = summary.summaryDetail || {}, profile = summary.assetProfile || {};
+      const price = detail.regularMarketPrice?.raw, eps = stats.trailingEps?.raw;
+      result = {
+        symbol, sector: profile.sector || MANUAL_FUNDAMENTALS[symbol]?.sector || 'Genel',
+        industry: profile.industry || '',
+        fk: detail.trailingPE?.raw || (price && eps ? price / eps : null),
+        pddd: stats.priceToBook?.raw || null,
+        roe: fin.returnOnEquity?.raw ? fin.returnOnEquity.raw * 100 : null,
+        ros: fin.profitMargins?.raw ? fin.profitMargins.raw * 100 : null,
+        eps: eps || null, marketCap: stats.marketCap?.raw || null,
+        beta: stats.beta?.raw || null,
+        dividendYield: detail.dividendYield?.raw ? detail.dividendYield.raw * 100 : null,
+      };
+    }
+  } catch(e) { console.log('Yahoo fundamentals hatasi:', e.message); }
 
-    const fin = summary.financialData || {};
-    const stats = summary.defaultKeyStatistics || {};
-    const detail = summary.summaryDetail || {};
-    const profile = summary.assetProfile || {};
-
-    const result = {
-      symbol,
-      sector: profile.sector || 'Genel',
-      industry: profile.industry || '',
-      employees: profile.fullTimeEmployees,
-      fk: detail.trailingPE?.raw || stats.trailingEps?.raw ? (detail.regularMarketPrice?.raw / stats.trailingEps?.raw) : null,
-      pddd: stats.priceToBook?.raw || null,
-      roe: fin.returnOnEquity?.raw ? (fin.returnOnEquity.raw * 100) : null,
-      ros: fin.profitMargins?.raw ? (fin.profitMargins.raw * 100) : null,
-      eps: stats.trailingEps?.raw || null,
-      marketCap: stats.marketCap?.raw || null,
-      beta: stats.beta?.raw || null,
-      dividendYield: detail.dividendYield?.raw ? (detail.dividendYield.raw * 100) : null,
-      debtToEquity: fin.debtToEquity?.raw || null,
-      currentRatio: fin.currentRatio?.raw || null,
-      grossMargin: fin.grossMargins?.raw ? (fin.grossMargins.raw * 100) : null,
-      operatingMargin: fin.operatingMargins?.raw ? (fin.operatingMargins.raw * 100) : null,
-      revenueGrowth: fin.revenueGrowth?.raw ? (fin.revenueGrowth.raw * 100) : null,
-      earningsGrowth: fin.earningsGrowth?.raw ? (fin.earningsGrowth.raw * 100) : null,
-    };
-
-    cacheSet(cacheKey, result);
-    res.json(result);
-  } catch (e) {
-    console.error('Fundamentals error:', e.message);
-    res.status(500).json({ error: e.message });
+  if (!result || (!result.fk && !result.pddd && !result.roe)) {
+    const manual = MANUAL_FUNDAMENTALS[symbol];
+    result = manual ? { symbol, ...manual } : { symbol, sector: 'Genel', fk: null, pddd: null, roe: null };
   }
+  cacheSet(`fund_${symbol}`, result);
+  res.json(result);
 });
 
-// KAP Haberleri
 app.get('/api/news', async (req, res) => {
   const symbol = req.query.symbol?.toUpperCase();
   const cacheKey = `news_${symbol || 'all'}`;
   const cached = cacheGet(cacheKey);
   if (cached) return res.json(cached);
-
   try {
-    let news = await fetchKAPNews();
-    if (symbol) {
-      const shortSymbol = symbol.replace('.IS', '');
-      news = news.filter(n => n.title?.toUpperCase().includes(shortSymbol));
-    }
-
-    // Sentimant analizi için Claude kullan
+    let news = await fetchKAPNews(symbol);
     if (news.length > 0 && process.env.ANTHROPIC_API_KEY) {
       const titles = news.slice(0, 10).map(n => n.title).join('\n');
       try {
         const msg = await anthropic.messages.create({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 500,
-          messages: [{
-            role: 'user',
-            content: `Aşağıdaki KAP haberlerini analiz et. Her haber için "olumlu", "olumsuz" veya "nötr" yaz ve -1 ile 1 arasında genel sentimant skoru ver. JSON formatında yanıt ver:
-{"items": [{"title": "...", "sentiment": "olumlu/olumsuz/nötr", "score": 0.5}], "overall": 0.2}
-
-Haberler:
-${titles}`
-          }]
+          model: 'claude-sonnet-4-20250514', max_tokens: 600,
+          messages: [{ role: 'user', content: `Haber basliklarini analiz et. Sadece JSON don: {"items":[{"sentiment":"olumlu"}],"overall":0.2}\n\n${titles}` }]
         });
         const raw = msg.content[0].text;
         const jsonMatch = raw.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
-          news = news.slice(0, 10).map((n, i) => ({
-            ...n,
-            sentiment: parsed.items?.[i]?.sentiment || 'nötr',
-            sentimentScore: parsed.items?.[i]?.score || 0,
-          }));
+          news = news.slice(0, 10).map((n, i) => ({ ...n, sentiment: parsed.items?.[i]?.sentiment || 'notr' }));
           const result = { news, overallSentiment: parsed.overall || 0 };
           cacheSet(cacheKey, result);
           return res.json(result);
         }
-      } catch (e) {
-        console.error('Sentiment error:', e.message);
-      }
+      } catch(e) { console.log('Sentimant hatasi:', e.message); }
     }
-
     const result = { news, overallSentiment: 0 };
     cacheSet(cacheKey, result);
     res.json(result);
-  } catch (e) {
-    console.error('News error:', e.message);
-    res.status(500).json({ error: e.message });
-  }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Tam analiz (temel + teknik + haber → rating)
 app.get('/api/analyze/:symbol', async (req, res) => {
   const symbol = req.params.symbol.toUpperCase();
-  const cacheKey = `analyze_${symbol}`;
-  const cached = cacheGet(cacheKey);
+  const cached = cacheGet(`analyze_${symbol}`);
   if (cached) return res.json(cached);
-
-  try {
-    const [stockRes, fundRes, newsRes] = await Promise.allSettled([
-      axios.get(`http://localhost:${PORT}/api/stock/${symbol}`),
-      axios.get(`http://localhost:${PORT}/api/fundamentals/${symbol}`),
-      axios.get(`http://localhost:${PORT}/api/news?symbol=${symbol}`),
-    ]);
-
-    const stock = stockRes.status === 'fulfilled' ? stockRes.value.data : null;
-    const fund = fundRes.status === 'fulfilled' ? fundRes.value.data : null;
-    const newsData = newsRes.status === 'fulfilled' ? newsRes.value.data : null;
-
-    const fundamental = fund ? {
-      fk: fund.fk, pddd: fund.pddd, roe: fund.roe,
-      sector: fund.sector || 'Genel',
-    } : null;
-
-    const technical = stock ? {
-      rsi: stock.technical?.rsi,
-      macd: stock.technical?.macd,
-      trend: stock.technical?.trend,
-    } : null;
-
-    const sentiment = newsData?.overallSentiment ?? 0;
-
-    const rating = calculateRating(fundamental, technical, sentiment);
-
-    // Sektör karşılaştırma
-    const sectorBench = SECTOR_BENCHMARKS[fund?.sector] || SECTOR_BENCHMARKS['Genel'];
-    const sectorComparison = fund ? {
-      sector: fund.sector || 'Genel',
-      fkVsSector: fund.fk ? ((fund.fk - sectorBench.fk) / sectorBench.fk * 100).toFixed(1) : null,
-      pdddVsSector: fund.pddd ? ((fund.pddd - sectorBench.pddd) / sectorBench.pddd * 100).toFixed(1) : null,
-      roeVsSector: fund.roe ? ((fund.roe - sectorBench.roe) / sectorBench.roe * 100).toFixed(1) : null,
-    } : null;
-
-    const result = { symbol, stock, fund, newsData, rating, sectorComparison };
-    cacheSet(cacheKey, result);
-    res.json(result);
-  } catch (e) {
-    console.error('Analyze error:', e.message);
-    res.status(500).json({ error: e.message });
-  }
+  const base = `http://localhost:${PORT}`;
+  const [stockRes, fundRes, newsRes] = await Promise.allSettled([
+    axios.get(`${base}/api/stock/${symbol}`),
+    axios.get(`${base}/api/fundamentals/${symbol}`),
+    axios.get(`${base}/api/news?symbol=${symbol}`),
+  ]);
+  const stock = stockRes.status === 'fulfilled' ? stockRes.value.data : null;
+  const fund = fundRes.status === 'fulfilled' ? fundRes.value.data : null;
+  const newsData = newsRes.status === 'fulfilled' ? newsRes.value.data : null;
+  const fundamental = fund ? { fk: fund.fk, pddd: fund.pddd, roe: fund.roe, sector: fund.sector || 'Genel' } : null;
+  const technical = stock ? { rsi: stock.technical?.rsi, trend: stock.technical?.trend } : null;
+  const rating = calculateRating(fundamental, technical, newsData?.overallSentiment ?? 0);
+  const bench = SECTOR_BENCHMARKS[fund?.sector] || SECTOR_BENCHMARKS['Genel'];
+  const sectorComparison = fund ? {
+    sector: fund.sector || 'Genel',
+    fkVsSector: fund.fk ? ((fund.fk - bench.fk) / bench.fk * 100).toFixed(1) : null,
+    pdddVsSector: fund.pddd ? ((fund.pddd - bench.pddd) / bench.pddd * 100).toFixed(1) : null,
+    roeVsSector: fund.roe ? ((fund.roe - bench.roe) / bench.roe * 100).toFixed(1) : null,
+  } : null;
+  const result = { symbol, stock, fund, newsData, rating, sectorComparison };
+  cacheSet(`analyze_${symbol}`, result);
+  res.json(result);
 });
 
-// AI Chat
 app.post('/api/chat', async (req, res) => {
   const { message, context } = req.body;
   if (!message) return res.status(400).json({ error: 'Mesaj gerekli' });
-
   try {
-    const systemPrompt = `Sen uzman bir Türk borsa analisti ve finansal danışmansın. 
-Kullanıcıya BIST hisseleri, Türk ekonomisi ve global piyasalar hakkında net, pratik ve analitik cevaplar ver.
-Teknik analiz (RSI, MACD, Bollinger Bands, MA), temel analiz (F/K, PD/DD, ROE) konularında derinlemesine bilgi sahibisin.
-KAP haberleri ve şirket duyurularını yorumlayabilirsin.
-Yanıtların özlü ama kapsamlı olsun. Risk uyarılarını unutma.
-${context ? `\n\nMevcut analiz bağlamı:\n${JSON.stringify(context, null, 2)}` : ''}`;
-
     const msg = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      system: systemPrompt,
+      model: 'claude-sonnet-4-20250514', max_tokens: 1000,
+      system: `Sen uzman bir Turk borsa analisti ve finansal danismansin. BIST hisseleri, Turk ekonomisi ve global piyasalar hakkinda net, pratik ve analitik cevaplar ver. Teknik analiz (RSI, MACD, Bollinger Bands, MA), temel analiz (F/K, PD/DD, ROE) konularinda derinlemesine bilgi sahibisin. Risk uyarilarini unutma.${context ? `\n\nMevcut bagiam: ${JSON.stringify(context)}` : ''}`,
       messages: [{ role: 'user', content: message }],
     });
-
     res.json({ response: msg.content[0].text });
-  } catch (e) {
-    console.error('Chat error:', e.message);
-    res.status(500).json({ error: e.message });
-  }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Popüler BIST hisseleri
 app.get('/api/watchlist', async (req, res) => {
   const symbols = ['THYAO.IS', 'EREGL.IS', 'AKBNK.IS', 'GARAN.IS', 'ASELS.IS', 'KCHOL.IS', 'BIMAS.IS', 'TCELL.IS'];
-  const cacheKey = 'watchlist';
-  const cached = cacheGet(cacheKey);
+  const cached = cacheGet('watchlist');
   if (cached) return res.json(cached);
-
-  try {
-    const results = await Promise.allSettled(
-      symbols.map(s => axios.get(`http://localhost:${PORT}/api/stock/${s}`, { timeout: 8000 }))
-    );
-    const data = results
-      .filter(r => r.status === 'fulfilled')
-      .map(r => r.value.data);
-    cacheSet(cacheKey, data);
-    res.json(data);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  const results = await Promise.allSettled(symbols.map(s => axios.get(`http://localhost:${PORT}/api/stock/${s}`, { timeout: 8000 })));
+  const data = results.filter(r => r.status === 'fulfilled').map(r => r.value.data);
+  cacheSet('watchlist', data);
+  res.json(data);
 });
 
-// Frontend
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
-});
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../public/index.html')));
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  console.log(`🚀 Borsa AI çalışıyor: http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Borsa AI: http://localhost:${PORT}`));
