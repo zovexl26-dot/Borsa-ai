@@ -15,9 +15,14 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
         .container { max-width: 560px; width: 100%; }
-        .logo { text-align: center; margin-bottom: 2.5rem; }
+        .logo { text-align: center; margin-bottom: 2rem; }
         .logo h1 { font-family: 'JetBrains Mono', monospace; font-size: 2rem; font-weight: 700; color: var(--accent); letter-spacing: -0.02em; }
         .logo p { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
+        .nav-butonlar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.25rem; }
+        .nav-btn { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 0.85rem 0.5rem; text-align: center; text-decoration: none; color: var(--text); transition: all 0.15s; }
+        .nav-btn:hover { border-color: var(--accent); background: rgba(88,166,255,0.06); }
+        .nav-btn .nav-icon { font-size: 1.3rem; margin-bottom: 0.3rem; }
+        .nav-btn .nav-label { font-size: 0.75rem; color: var(--muted); font-weight: 500; }
         .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; }
         .form-group { margin-bottom: 1.25rem; }
         label { display: block; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; font-weight: 500; }
@@ -26,7 +31,6 @@
         input[type="text"]::placeholder { color: var(--muted); font-weight: 400; text-transform: none; letter-spacing: 0; }
         .btn { width: 100%; background: linear-gradient(135deg, var(--accent) 0%, #a371f7 100%); color: #fff; border: none; border-radius: 10px; padding: 0.9rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; margin-top: 0.5rem; }
         .btn:hover { opacity: 0.9; }
-        .btn:active { opacity: 0.8; }
         .error { background: rgba(248,81,73,0.1); border: 1px solid rgba(248,81,73,0.3); border-radius: 8px; padding: 0.75rem 1rem; color: var(--red); font-size: 0.85rem; margin-bottom: 1rem; }
         .quick-picks { margin-top: 1.5rem; }
         .quick-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem; }
@@ -45,6 +49,21 @@
     <div class="logo">
         <h1>📈 Borsa AI</h1>
         <p>BIST hisseleri için yapay zeka destekli analiz platformu</p>
+    </div>
+
+    <div class="nav-butonlar">
+        <a href="/firsatlar" class="nav-btn">
+            <div class="nav-icon">🎯</div>
+            <div class="nav-label">Fırsat Hisseleri</div>
+        </a>
+        <a href="/ozet" class="nav-btn">
+            <div class="nav-icon">📊</div>
+            <div class="nav-label">Piyasa Özeti</div>
+        </a>
+        <a href="/karsilastir" class="nav-btn">
+            <div class="nav-icon">⚖️</div>
+            <div class="nav-label">Karşılaştır</div>
+        </a>
     </div>
 
     <div class="card">
