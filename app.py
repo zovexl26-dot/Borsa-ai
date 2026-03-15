@@ -107,11 +107,10 @@ def rsi_hesapla(kapanislar, periyot=14):
         delta = kapanislar.diff()
         kazan = delta.clip(lower=0)
         kayip = (-delta).clip(lower=0)
-        ort_kazan = kazan.rolling(window=periyot).mean()
-        ort_kayip = kayip.rolling(window=periyot).mean()
-        for i in range(periyot, len(ort_kazan)):
-            ort_kazan.iloc[i] = (ort_kazan.iloc[i-1] * (periyot-1) + kazan.iloc[i]) / periyot
-            ort_kayip.iloc[i] = (ort_kayip.iloc[i-1] * (periyot-1) + kayip.iloc[i]) / periyot
+        # Wilder's RMA (TradingView ile birebir)
+        alpha = 1.0 / periyot
+        ort_kazan = kazan.ewm(alpha=alpha, adjust=False, min_periods=periyot).mean()
+        ort_kayip = kayip.ewm(alpha=alpha, adjust=False, min_periods=periyot).mean()
         rs = ort_kazan / ort_kayip
         rsi = 100 - (100 / (1 + rs))
         return float(rsi.iloc[-1]) if not pd.isna(rsi.iloc[-1]) else None
