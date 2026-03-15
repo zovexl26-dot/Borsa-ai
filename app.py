@@ -93,8 +93,8 @@ def rsi_hesapla(kapanislar, periyot=14):
         delta = kapanislar.diff()
         kazan = delta.clip(lower=0)
         kayip = (-delta).clip(lower=0)
-       ort_kazan = kazan.ewm(alpha=1/periyot, min_periods=periyot, adjust=False).mean()
-       ort_kayip = kayip.ewm(alpha=1/periyot, min_periods=periyot, adjust=False).mean()
+           ort_kazan = kazan.ewm(alpha=1/periyot, min_periods=periyot, adjust=False).mean()
+           ort_kayip = kayip.ewm(alpha=1/periyot, min_periods=periyot, adjust=False).mean()
         rs = ort_kazan / ort_kayip
         rsi = 100 - (100 / (1 + rs))
         return float(rsi.iloc[-1]) if not pd.isna(rsi.iloc[-1]) else None
