@@ -149,7 +149,7 @@ def teknik_veri_cek(sembol):
     veri = {}
     try:
         hisse = yf.Ticker(sembol)
-        tarihsel = hisse.history(period="2y", auto_adjust=True)
+        tarihsel = hisse.history(period="1y", auto_adjust=True)
         if tarihsel.empty:
             return None
 
