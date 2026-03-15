@@ -6,6 +6,7 @@
     <title>{{ sembol }} Analizi - Borsa AI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <style>
         :root {
             --bg: #0d1117; --card: #161b22; --border: #30363d;
@@ -86,12 +87,30 @@
         .ai-report ul { margin-left: 1.2rem; margin-bottom: 0.5rem; }
         .ai-report li { margin-bottom: 0.25rem; }
         .ai-report p { margin-bottom: 0.6rem; }
-        .section-divider { height: 1px; background: var(--border); margin: 1rem 0; }
+
+        /* FİYAT TAHMİNİ */
+        .tahmin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        .tahmin-kart { border-radius: 12px; padding: 1.1rem 1rem; text-align: center; border: 2px solid; }
+        .tahmin-kart.olumlu { background: rgba(63,185,80,0.08); border-color: rgba(63,185,80,0.3); }
+        .tahmin-kart.notr { background: rgba(227,179,65,0.08); border-color: rgba(227,179,65,0.3); }
+        .tahmin-kart.olumsuz { background: rgba(248,81,73,0.08); border-color: rgba(248,81,73,0.3); }
+        .tahmin-vade { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 0.4rem; }
+        .tahmin-durum { font-size: 1rem; font-weight: 800; margin-bottom: 0.3rem; }
+        .tahmin-kart.olumlu .tahmin-durum { color: var(--green); }
+        .tahmin-kart.notr .tahmin-durum { color: var(--yellow); }
+        .tahmin-kart.olumsuz .tahmin-durum { color: var(--red); }
+        .tahmin-fiyat { font-size: 1.2rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text); }
+        .tahmin-aralik { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; }
+        .tahmin-neden { font-size: 0.72rem; color: var(--muted); margin-top: 0.4rem; line-height: 1.4; }
+        .grafik-wrap { position: relative; height: 200px; margin-top: 1rem; }
+        .uyari-kucuk { font-size: 0.72rem; color: var(--muted); margin-top: 0.75rem; text-align: center; font-style: italic; }
+
         @media (max-width: 600px) {
             .price-hero { flex-direction: column; }
             .metrics-grid { grid-template-columns: repeat(2, 1fr); }
             .perf-row { grid-template-columns: repeat(2, 1fr); }
             .rating-factors { grid-template-columns: 1fr; }
+            .tahmin-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -156,6 +175,164 @@
             {% else %}<p class="na">Teknik veri alinamadi.</p>{% endif %}
         </div>
     </div>
+
+    <!-- FİYAT TAHMİNİ KARTI -->
+    {% if teknik %}
+    <div class="card">
+        <div class="card-header" onclick="toggleCard(this)">
+            <span class="card-icon">🔮</span><span class="card-title">Fiyat Tahmini</span><span class="card-toggle open">▼</span>
+        </div>
+        <div class="card-body open">
+            {% set fiyat = teknik.guncel_fiyat %}
+            {% set rsi = teknik.rsi or 50 %}
+            {% set macd_h = teknik.macd_histogram or 0 %}
+            {% set ma20 = teknik.ma20 or fiyat %}
+            {% set ma50 = teknik.ma50 or fiyat %}
+            {% set ma200 = teknik.ma200 or fiyat %}
+            {% set perf1ay = teknik.perf_1ay or 0 %}
+            {% set perf3ay = teknik.perf_3ay or 0 %}
+
+            {# KISA VADE (1 hafta) - RSI + MACD bazlı #}
+            {% set kisa_puan = 0 %}
+            {% if rsi < 35 %}{% set kisa_puan = kisa_puan + 2 %}{% elif rsi < 45 %}{% set kisa_puan = kisa_puan + 1 %}{% elif rsi > 65 %}{% set kisa_puan = kisa_puan - 2 %}{% elif rsi > 55 %}{% set kisa_puan = kisa_puan - 1 %}{% endif %}
+            {% if macd_h > 0 %}{% set kisa_puan = kisa_puan + 1 %}{% else %}{% set kisa_puan = kisa_puan - 1 %}{% endif %}
+            {% if fiyat > ma20 %}{% set kisa_puan = kisa_puan + 1 %}{% else %}{% set kisa_puan = kisa_puan - 1 %}{% endif %}
+
+            {% if kisa_puan >= 2 %}
+                {% set kisa_durum = "Olumlu" %}{% set kisa_class = "olumlu" %}{% set kisa_emoji = "📈" %}
+                {% set kisa_hedef = (fiyat * 1.04) | round(2) %}
+                {% set kisa_alt = (fiyat * 0.99) | round(2) %}
+                {% set kisa_neden = "RSI ve MACD pozitif sinyal veriyor" %}
+            {% elif kisa_puan <= -2 %}
+                {% set kisa_durum = "Olumsuz" %}{% set kisa_class = "olumsuz" %}{% set kisa_emoji = "📉" %}
+                {% set kisa_hedef = (fiyat * 0.96) | round(2) %}
+                {% set kisa_alt = (fiyat * 0.93) | round(2) %}
+                {% set kisa_neden = "Aşırı alım bölgesi, düzeltme bekleniyor" %}
+            {% else %}
+                {% set kisa_durum = "Nötr" %}{% set kisa_class = "notr" %}{% set kisa_emoji = "➡️" %}
+                {% set kisa_hedef = (fiyat * 1.01) | round(2) %}
+                {% set kisa_alt = (fiyat * 0.99) | round(2) %}
+                {% set kisa_neden = "Kararsız seyir, net sinyal yok" %}
+            {% endif %}
+
+            {# ORTA VADE (1 ay) - MA trendleri bazlı #}
+            {% set orta_puan = 0 %}
+            {% if fiyat > ma50 %}{% set orta_puan = orta_puan + 2 %}{% else %}{% set orta_puan = orta_puan - 2 %}{% endif %}
+            {% if fiyat > ma200 %}{% set orta_puan = orta_puan + 1 %}{% else %}{% set orta_puan = orta_puan - 1 %}{% endif %}
+            {% if perf1ay > 5 %}{% set orta_puan = orta_puan + 1 %}{% elif perf1ay < -5 %}{% set orta_puan = orta_puan - 1 %}{% endif %}
+
+            {% if orta_puan >= 2 %}
+                {% set orta_durum = "Olumlu" %}{% set orta_class = "olumlu" %}{% set orta_emoji = "📈" %}
+                {% set orta_hedef = (fiyat * 1.10) | round(2) %}
+                {% set orta_alt = (fiyat * 1.02) | round(2) %}
+                {% set orta_neden = "Fiyat güçlü MA trendlerinin üzerinde" %}
+            {% elif orta_puan <= -2 %}
+                {% set orta_durum = "Olumsuz" %}{% set orta_class = "olumsuz" %}{% set orta_emoji = "📉" %}
+                {% set orta_hedef = (fiyat * 0.90) | round(2) %}
+                {% set orta_alt = (fiyat * 0.85) | round(2) %}
+                {% set orta_neden = "MA trendleri altında, baskı devam edebilir" %}
+            {% else %}
+                {% set orta_durum = "Nötr" %}{% set orta_class = "notr" %}{% set orta_emoji = "➡️" %}
+                {% set orta_hedef = (fiyat * 1.05) | round(2) %}
+                {% set orta_alt = (fiyat * 0.95) | round(2) %}
+                {% set orta_neden = "Karma sinyaller, yatay seyir bekleniyor" %}
+            {% endif %}
+
+            {# UZUN VADE (12 ay) - Temel + momentum bazlı #}
+            {% set uzun_puan = 0 %}
+            {% if fiyat > ma200 %}{% set uzun_puan = uzun_puan + 2 %}{% else %}{% set uzun_puan = uzun_puan - 1 %}{% endif %}
+            {% if perf3ay > 10 %}{% set uzun_puan = uzun_puan + 2 %}{% elif perf3ay < -10 %}{% set uzun_puan = uzun_puan - 2 %}{% endif %}
+            {% if temel and temel.roe and temel.roe > 15 %}{% set uzun_puan = uzun_puan + 1 %}{% endif %}
+            {% if temel and temel.pe_orani and temel.pe_orani < 15 %}{% set uzun_puan = uzun_puan + 1 %}{% endif %}
+
+            {% if uzun_puan >= 2 %}
+                {% set uzun_durum = "Olumlu" %}{% set uzun_class = "olumlu" %}{% set uzun_emoji = "📈" %}
+                {% set uzun_hedef = (fiyat * 1.30) | round(2) %}
+                {% set uzun_alt = (fiyat * 1.10) | round(2) %}
+                {% set uzun_neden = "Güçlü temel + teknik tablo" %}
+            {% elif uzun_puan <= -1 %}
+                {% set uzun_durum = "Olumsuz" %}{% set uzun_class = "olumsuz" %}{% set uzun_emoji = "📉" %}
+                {% set uzun_hedef = (fiyat * 0.80) | round(2) %}
+                {% set uzun_alt = (fiyat * 0.70) | round(2) %}
+                {% set uzun_neden = "Zayıf momentum, riskler ağır basıyor" %}
+            {% else %}
+                {% set uzun_durum = "Nötr" %}{% set uzun_class = "notr" %}{% set uzun_emoji = "➡️" %}
+                {% set uzun_hedef = (fiyat * 1.15) | round(2) %}
+                {% set uzun_alt = (fiyat * 0.90) | round(2) %}
+                {% set uzun_neden = "Orta düzey büyüme potansiyeli" %}
+            {% endif %}
+
+            <div class="tahmin-grid">
+                <div class="tahmin-kart {{ kisa_class }}">
+                    <div class="tahmin-vade">Kısa Vade · 1 Hafta</div>
+                    <div class="tahmin-durum">{{ kisa_emoji }} {{ kisa_durum }}</div>
+                    <div class="tahmin-fiyat">{{ kisa_hedef }} TL</div>
+                    <div class="tahmin-aralik">{{ kisa_alt }} – {{ kisa_hedef }} TL aralığı</div>
+                    <div class="tahmin-neden">{{ kisa_neden }}</div>
+                </div>
+                <div class="tahmin-kart {{ orta_class }}">
+                    <div class="tahmin-vade">Orta Vade · 1 Ay</div>
+                    <div class="tahmin-durum">{{ orta_emoji }} {{ orta_durum }}</div>
+                    <div class="tahmin-fiyat">{{ orta_hedef }} TL</div>
+                    <div class="tahmin-aralik">{{ orta_alt }} – {{ orta_hedef }} TL aralığı</div>
+                    <div class="tahmin-neden">{{ orta_neden }}</div>
+                </div>
+                <div class="tahmin-kart {{ uzun_class }}">
+                    <div class="tahmin-vade">Uzun Vade · 12 Ay</div>
+                    <div class="tahmin-durum">{{ uzun_emoji }} {{ uzun_durum }}</div>
+                    <div class="tahmin-fiyat">{{ uzun_hedef }} TL</div>
+                    <div class="tahmin-aralik">{{ uzun_alt }} – {{ uzun_hedef }} TL aralığı</div>
+                    <div class="tahmin-neden">{{ uzun_neden }}</div>
+                </div>
+            </div>
+
+            <div class="grafik-wrap">
+                <canvas id="tahminGrafik"></canvas>
+            </div>
+            <p class="uyari-kucuk">⚠️ Bu tahminler teknik göstergelere dayalı algoritmik hesaplamadır, kesinlik garantisi vermez.</p>
+
+            <script>
+            (function() {
+                const fiyat = {{ fiyat }};
+                const ctx = document.getElementById('tahminGrafik').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Güncel', '1 Hafta', '1 Ay', '12 Ay'],
+                        datasets: [{
+                            label: 'Hedef Fiyat (TL)',
+                            data: [fiyat, {{ kisa_hedef }}, {{ orta_hedef }}, {{ uzun_hedef }}],
+                            backgroundColor: [
+                                'rgba(88,166,255,0.5)',
+                                '{{ "rgba(63,185,80,0.5)" if kisa_class == "olumlu" else "rgba(248,81,73,0.5)" if kisa_class == "olumsuz" else "rgba(227,179,65,0.5)" }}',
+                                '{{ "rgba(63,185,80,0.5)" if orta_class == "olumlu" else "rgba(248,81,73,0.5)" if orta_class == "olumsuz" else "rgba(227,179,65,0.5)" }}',
+                                '{{ "rgba(63,185,80,0.5)" if uzun_class == "olumlu" else "rgba(248,81,73,0.5)" if uzun_class == "olumsuz" else "rgba(227,179,65,0.5)" }}',
+                            ],
+                            borderColor: [
+                                'rgba(88,166,255,1)',
+                                '{{ "rgba(63,185,80,1)" if kisa_class == "olumlu" else "rgba(248,81,73,1)" if kisa_class == "olumsuz" else "rgba(227,179,65,1)" }}',
+                                '{{ "rgba(63,185,80,1)" if orta_class == "olumlu" else "rgba(248,81,73,1)" if orta_class == "olumsuz" else "rgba(227,179,65,1)" }}',
+                                '{{ "rgba(63,185,80,1)" if uzun_class == "olumlu" else "rgba(248,81,73,1)" if uzun_class == "olumsuz" else "rgba(227,179,65,1)" }}',
+                            ],
+                            borderWidth: 2,
+                            borderRadius: 6,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { grid: { color: 'rgba(48,54,61,0.5)' }, ticks: { color: '#8b949e', font: { family: 'JetBrains Mono' } } },
+                            x: { grid: { display: false }, ticks: { color: '#8b949e' } }
+                        }
+                    }
+                });
+            })();
+            </script>
+        </div>
+    </div>
+    {% endif %}
 
     <div class="card">
         <div class="card-header" onclick="toggleCard(this)">
@@ -296,6 +473,7 @@
     </div>
     <div style="margin-top:1.5rem;text-align:center">
         <p style="color:var(--muted);font-size:0.78rem">⚠️ Bu analiz yatirim tavsiyesi degildir. Veri: KAP · Google Haberler · Yahoo Finance · Claude · {{ analiz_tarihi }}</p>
+        <div style="margin-top:0.5rem;font-size:0.82rem;color:#58a6ff;font-weight:600">Made by Ahmet İlhan Arıkan · <a href="https://instagram.com/ahmet.ariikan" target="_blank" style="color:#c9a84c">@ahmet.ariikan</a></div>
     </div>
 </div>
 <script>
