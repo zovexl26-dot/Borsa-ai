@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Günün Fırsat Hisseleri - Borsa AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117; --card: #161b22; --border: #30363d;
+            --accent: #58a6ff; --green: #3fb950; --red: #f85149;
+            --yellow: #e3b341; --text: #e6edf3; --muted: #8b949e; --surface: #21262d;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; padding: 1.5rem 1rem 3rem; }
+        .page-wrap { max-width: 1000px; margin: 0 auto; }
+        .top-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .back-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; text-decoration: none; }
+        .back-btn:hover { color: var(--text); }
+        .page-title h1 { font-size: 1.6rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+        .page-title .sub { color: var(--muted); font-size: 0.85rem; margin-top: 0.2rem; }
+        .refresh-btn { background: linear-gradient(135deg, var(--accent) 0%, #a371f7 100%); color: #fff; border: none; border-radius: 8px; padding: 0.55rem 1.2rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-decoration: none; margin-left: auto; }
+        .bos-mesaj { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+        .bos-mesaj .icon { font-size: 3rem; margin-bottom: 1rem; }
+        .firsat-grid { display: grid; gap: 1rem; }
+        .firsat-kart { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; transition: border-color 0.2s; }
+        .firsat-kart:hover { border-color: var(--accent); }
+        .firsat-sira { font-size: 1.5rem; font-weight: 800; color: var(--muted); font-family: 'JetBrains Mono', monospace; min-width: 2rem; }
+        .firsat-sira.gold { color: #ffd700; }
+        .firsat-sira.silver { color: #c0c0c0; }
+        .firsat-sira.bronze { color: #cd7f32; }
+        .firsat-sembol { min-width: 120px; }
+        .firsat-sembol .sembol { font-size: 1.1rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+        .firsat-sembol .isim { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+        .firsat-fiyat { min-width: 100px; }
+        .firsat-fiyat .fiyat { font-size: 1rem; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+        .firsat-fiyat .degisim { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; margin-top: 0.1rem; }
+        .firsat-metrikler { display: flex; gap: 1rem; flex-wrap: wrap; flex: 1; }
+        .metrik { background: var(--surface); border-radius: 8px; padding: 0.4rem 0.75rem; text-align: center; min-width: 70px; }
+        .metrik-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+        .metrik-val { font-size: 0.9rem; font-weight: 600; font-family: 'JetBrains Mono', monospace; margin-top: 0.1rem; }
+        .firsat-nedenler { flex: 1; min-width: 200px; }
+        .neden-item { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.4rem; }
+        .neden-item::before { content: "✓"; color: var(--green); font-weight: 700; }
+        .puan-badge { background: linear-gradient(135deg, var(--accent), #a371f7); border-radius: 10px; padding: 0.5rem 0.9rem; text-align: center; min-width: 70px; }
+        .puan-sayi { font-size: 1.3rem; font-weight: 800; color: #fff; font-family: 'JetBrains Mono', monospace; }
+        .puan-label { font-size: 0.6rem; color: rgba(255,255,255,0.7); text-transform: uppercase; }
+        .analiz-btn { background: var(--surface); border: 1px solid var(--border); color: var(--accent); border-radius: 8px; padding: 0.4rem 0.85rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: none; white-space: nowrap; }
+        .analiz-btn:hover { background: rgba(88,166,255,0.1); }
+        .pos { color: var(--green); } .neg { color: var(--red); } .neu { color: var(--text); }
+        .uyari { background: rgba(227,179,65,0.1); border: 1px solid rgba(227,179,65,0.3); border-radius: 10px; padding: 0.75rem 1rem; color: var(--yellow); font-size: 0.8rem; margin-bottom: 1.5rem; }
+        @media (max-width: 600px) { .firsat-kart { flex-direction: column; align-items: flex-start; } }
+    </style>
+</head>
+<body>
+<div class="page-wrap">
+    <div class="top-bar">
+        <a href="/" class="back-btn">← Ana Sayfa</a>
+        <div class="page-title">
+            <h1>🎯 Günün Fırsat Hisseleri</h1>
+            <div class="sub">Teknik ve temel kriterlere göre otomatik tarama · {{ analiz_tarihi }}</div>
+        </div>
+        <a href="/firsatlar" class="refresh-btn">🔄 Yenile</a>
+    </div>
+
+    <div class="uyari">
+        ⚠️ Bu liste yatırım tavsiyesi değildir. Teknik göstergelere göre otomatik hesaplanmıştır.
+    </div>
+
+    {% if firsatlar %}
+    <div class="firsat-grid">
+        {% for f in firsatlar %}
+        <div class="firsat-kart">
+            <div class="firsat-sira {{ 'gold' if loop.index == 1 else 'silver' if loop.index == 2 else 'bronze' if loop.index == 3 else '' }}">
+                #{{ loop.index }}
+            </div>
+            <div class="firsat-sembol">
+                <div class="sembol">{{ f.sembol }}</div>
+                <div class="isim">{{ f.sirket_adi[:25] }}</div>
+            </div>
+            <div class="firsat-fiyat">
+                <div class="fiyat">{{ f.fiyat }} TL</div>
+                <div class="degisim {{ 'pos' if f.degisim and f.degisim > 0 else 'neg' if f.degisim and f.degisim < 0 else 'neu' }}">
+                    {{ '+' if f.degisim and f.degisim > 0 else '' }}{{ f.degisim }}%
+                </div>
+            </div>
+            <div class="firsat-metrikler">
+                <div class="metrik">
+                    <div class="metrik-label">RSI</div>
+                    <div class="metrik-val {{ 'pos' if f.rsi and f.rsi < 30 else 'neg' if f.rsi and f.rsi > 70 else 'neu' }}">{{ f.rsi if f.rsi else '—' }}</div>
+                </div>
+                <div class="metrik">
+                    <div class="metrik-label">F/K</div>
+                    <div class="metrik-val {{ 'pos' if f.pe and f.pe < 15 else 'neg' if f.pe and f.pe > 30 else 'neu' }}">{{ "%.1f"|format(f.pe) if f.pe else '—' }}</div>
+                </div>
+                <div class="metrik">
+                    <div class="metrik-label">MACD</div>
+                    <div class="metrik-val {{ 'pos' if f.macd_histogram and f.macd_histogram > 0 else 'neg' if f.macd_histogram and f.macd_histogram < 0 else 'neu' }}">
+                        {{ '▲' if f.macd_histogram and f.macd_histogram > 0 else '▼' if f.macd_histogram and f.macd_histogram < 0 else '—' }}
+                    </div>
+                </div>
+            </div>
+            <div class="firsat-nedenler">
+                {% for neden in f.nedenler %}
+                <div class="neden-item">{{ neden }}</div>
+                {% endfor %}
+            </div>
+            <div class="puan-badge">
+                <div class="puan-sayi">{{ f.puan }}</div>
+                <div class="puan-label">Puan</div>
+            </div>
+            <form action="/analyze" method="POST">
+                <input type="hidden" name="sembol" value="{{ f.sembol }}">
+                <button type="submit" class="analiz-btn">📊 Analiz Et</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bos-mesaj">
+        <div class="icon">🔍</div>
+        <p>Bugün kriterlere uyan fırsat hissesi bulunamadı.</p>
+        <p style="margin-top:0.5rem;font-size:0.85rem">Piyasa koşulları değiştiğinde tekrar kontrol edin.</p>
+    </div>
+    {% endif %}
+
+    <div style="margin-top:2rem;text-align:center">
+        <p style="color:var(--muted);font-size:0.75rem">
+            ⚠️ Yatırım tavsiyesi değildir. · <a href="/ozet" style="color:var(--accent)">Piyasa Özeti</a> · <a href="/karsilastir" style="color:var(--accent)">Hisse Karşılaştır</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>

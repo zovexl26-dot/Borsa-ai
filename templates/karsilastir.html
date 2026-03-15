@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hisse Karşılaştır - Borsa AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117; --card: #161b22; --border: #30363d;
+            --accent: #58a6ff; --green: #3fb950; --red: #f85149;
+            --yellow: #e3b341; --text: #e6edf3; --muted: #8b949e; --surface: #21262d;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; padding: 1.5rem 1rem 3rem; }
+        .page-wrap { max-width: 1000px; margin: 0 auto; }
+        .top-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .back-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; text-decoration: none; }
+        .back-btn:hover { color: var(--text); }
+        .page-title h1 { font-size: 1.6rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+        .page-title .sub { color: var(--muted); font-size: 0.85rem; margin-top: 0.2rem; }
+        .form-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end; }
+        .form-group label { display: block; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.4rem; }
+        input[type="text"] { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 500; text-transform: uppercase; outline: none; }
+        input[type="text"]:focus { border-color: var(--accent); }
+        .btn { background: linear-gradient(135deg, var(--accent) 0%, #a371f7 100%); color: #fff; border: none; border-radius: 8px; padding: 0.75rem 1.5rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .error { background: rgba(248,81,73,0.1); border: 1px solid rgba(248,81,73,0.3); border-radius: 8px; padding: 0.75rem 1rem; color: var(--red); font-size: 0.85rem; margin-bottom: 1rem; }
+        .vs-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; align-items: start; margin-bottom: 1.5rem; }
+        .vs-label { display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; color: var(--muted); padding-top: 2rem; }
+        .hisse-header { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; text-align: center; margin-bottom: 1rem; }
+        .hisse-header .sembol { font-size: 1.4rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+        .hisse-header .isim { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+        .hisse-header .fiyat { font-size: 1.6rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-top: 0.5rem; }
+        .hisse-header .degisim { font-size: 0.9rem; font-family: 'JetBrains Mono', monospace; }
+        .karsilastir-tablo { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+        .tablo-baslik { padding: 0.75rem 1.25rem; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 0.8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .tablo-satir { display: grid; grid-template-columns: 1fr 1fr 1fr; border-bottom: 1px solid rgba(48,54,61,0.5); }
+        .tablo-satir:last-child { border-bottom: none; }
+        .tablo-hucre { padding: 0.7rem 1.25rem; font-size: 0.88rem; font-family: 'JetBrains Mono', monospace; }
+        .tablo-hucre.etiket { color: var(--muted); font-family: 'Inter', sans-serif; font-size: 0.8rem; background: rgba(33,38,45,0.5); }
+        .tablo-hucre.iyi { color: var(--green); font-weight: 600; background: rgba(63,185,80,0.05); }
+        .tablo-hucre.kotu { color: var(--red); }
+        .pos { color: var(--green); } .neg { color: var(--red); } .neu { color: var(--text); }
+        .analiz-linkler { display: flex; gap: 1rem; margin-top: 1rem; }
+        .analiz-link { flex: 1; text-align: center; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem; color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 600; }
+        .analiz-link:hover { background: rgba(88,166,255,0.1); }
+        @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } .vs-grid { grid-template-columns: 1fr; } .vs-label { display: none; } }
+    </style>
+</head>
+<body>
+<div class="page-wrap">
+    <div class="top-bar">
+        <a href="/" class="back-btn">← Ana Sayfa</a>
+        <div class="page-title">
+            <h1>⚖️ Hisse Karşılaştır</h1>
+            <div class="sub">İki hisseyi yan yana karşılaştır</div>
+        </div>
+    </div>
+
+    <div class="form-card">
+        {% if hata %}<div class="error">⚠️ {{ hata }}</div>{% endif %}
+        <form action="/karsilastir" method="POST">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>1. Hisse</label>
+                    <input type="text" name="sembol1" placeholder="THYAO" value="{{ sembol1 }}" maxlength="10">
+                </div>
+                <div class="form-group">
+                    <label>2. Hisse</label>
+                    <input type="text" name="sembol2" placeholder="GARAN" value="{{ sembol2 }}" maxlength="10">
+                </div>
+                <button type="submit" class="btn">⚖️ Karşılaştır</button>
+            </div>
+        </form>
+    </div>
+
+    {% if teknik1 and teknik2 %}
+    <div class="vs-grid">
+        <div>
+            <div class="hisse-header">
+                <div class="sembol">{{ sembol1 }}</div>
+                <div class="isim">{{ temel1.sirket_adi[:30] if temel1 else '' }}</div>
+                <div class="fiyat {{ 'pos' if teknik1.gunluk_degisim > 0 else 'neg' }}">{{ teknik1.guncel_fiyat }} TL</div>
+                <div class="degisim {{ 'pos' if teknik1.gunluk_degisim > 0 else 'neg' }}">{{ '+' if teknik1.gunluk_degisim > 0 else '' }}{{ teknik1.gunluk_degisim }}%</div>
+            </div>
+            <div class="analiz-linkler">
+                <form action="/analyze" method="POST">
+                    <input type="hidden" name="sembol" value="{{ sembol1 }}">
+                    <button type="submit" class="analiz-link" style="width:100%;cursor:pointer;border:1px solid var(--border)">📊 Detaylı Analiz</button>
+                </form>
+            </div>
+        </div>
+        <div class="vs-label">VS</div>
+        <div>
+            <div class="hisse-header">
+                <div class="sembol">{{ sembol2 }}</div>
+                <div class="isim">{{ temel2.sirket_adi[:30] if temel2 else '' }}</div>
+                <div class="fiyat {{ 'pos' if teknik2.gunluk_degisim > 0 else 'neg' }}">{{ teknik2.guncel_fiyat }} TL</div>
+                <div class="degisim {{ 'pos' if teknik2.gunluk_degisim > 0 else 'neg' }}">{{ '+' if teknik2.gunluk_degisim > 0 else '' }}{{ teknik2.gunluk_degisim }}%</div>
+            </div>
+            <div class="analiz-linkler">
+                <form action="/analyze" method="POST">
+                    <input type="hidden" name="sembol" value="{{ sembol2 }}">
+                    <button type="submit" class="analiz-link" style="width:100%;cursor:pointer;border:1px solid var(--border)">📊 Detaylı Analiz</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="karsilastir-tablo" style="margin-bottom:1rem">
+        <div class="tablo-baslik">📊 Teknik Göstergeler</div>
+        {% set satirlar = [
+            ('RSI (14)', teknik1.rsi, teknik2.rsi, 'dusuk'),
+            ('MACD', teknik1.macd, teknik2.macd, 'yuksek'),
+            ('MA20', teknik1.ma20, teknik2.ma20, 'none'),
+            ('MA50', teknik1.ma50, teknik2.ma50, 'none'),
+            ('MA200', teknik1.ma200, teknik2.ma200, 'none'),
+            ('Destek', teknik1.destek, teknik2.destek, 'none'),
+            ('Direnc', teknik1.direnc, teknik2.direnc, 'none'),
+            ('1 Ay %', teknik1.perf_1ay, teknik2.perf_1ay, 'yuksek'),
+            ('3 Ay %', teknik1.perf_3ay, teknik2.perf_3ay, 'yuksek'),
+            ('1 Yil %', teknik1.perf_1yil, teknik2.perf_1yil, 'yuksek'),
+        ] %}
+        {% for etiket, val1, val2, tercih in satirlar %}
+        <div class="tablo-satir">
+            <div class="tablo-hucre etiket">{{ etiket }}</div>
+            <div class="tablo-hucre {% if val1 is not none and val2 is not none and tercih == 'yuksek' and val1 > val2 %}iyi{% elif val1 is not none and val2 is not none and tercih == 'dusuk' and val1 < val2 %}iyi{% endif %}">
+                {{ "%.2f"|format(val1) if val1 is not none else '—' }}
+            </div>
+            <div class="tablo-hucre {% if val1 is not none and val2 is not none and tercih == 'yuksek' and val2 > val1 %}iyi{% elif val1 is not none and val2 is not none and tercih == 'dusuk' and val2 < val1 %}iyi{% endif %}">
+                {{ "%.2f"|format(val2) if val2 is not none else '—' }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if temel1 and temel2 %}
+    <div class="karsilastir-tablo">
+        <div class="tablo-baslik">💰 Temel Göstergeler</div>
+        {% set temel_satirlar = [
+            ('F/K (P/E)', temel1.pe_orani, temel2.pe_orani, 'dusuk'),
+            ('PD/DD (P/B)', temel1.pb_orani, temel2.pb_orani, 'dusuk'),
+            ('FD/FAVOK', temel1.ev_ebitda, temel2.ev_ebitda, 'dusuk'),
+            ('ROE %', temel1.roe, temel2.roe, 'yuksek'),
+            ('Net Kar Marji %', temel1.net_kar_marji, temel2.net_kar_marji, 'yuksek'),
+            ('Brut Kar Marji %', temel1.brut_kar_marji, temel2.brut_kar_marji, 'yuksek'),
+            ('Borc/Ozkaynak', temel1.borc_ozkaynak, temel2.borc_ozkaynak, 'dusuk'),
+            ('Temettu Verimi %', temel1.temettu_verimi, temel2.temettu_verimi, 'yuksek'),
+            ('EPS', temel1.eps, temel2.eps, 'yuksek'),
+            ('Gelir Buyumesi %', temel1.gelir_buyumesi, temel2.gelir_buyumesi, 'yuksek'),
+        ] %}
+        {% for etiket, val1, val2, tercih in temel_satirlar %}
+        <div class="tablo-satir">
+            <div class="tablo-hucre etiket">{{ etiket }}</div>
+            <div class="tablo-hucre {% if val1 is not none and val2 is not none and tercih == 'yuksek' and val1 > val2 %}iyi{% elif val1 is not none and val2 is not none and tercih == 'dusuk' and val1 < val2 %}iyi{% endif %}">
+                {{ "%.2f"|format(val1) if val1 is not none else '—' }}
+            </div>
+            <div class="tablo-hucre {% if val1 is not none and val2 is not none and tercih == 'yuksek' and val2 > val1 %}iyi{% elif val1 is not none and val2 is not none and tercih == 'dusuk' and val2 < val1 %}iyi{% endif %}">
+                {{ "%.2f"|format(val2) if val2 is not none else '—' }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <div style="margin-top:1.5rem;text-align:center">
+        <p style="color:var(--muted);font-size:0.75rem">
+            ⚠️ Yatırım tavsiyesi değildir. · <a href="/firsatlar" style="color:var(--accent)">Fırsat Hisseleri</a> · <a href="/ozet" style="color:var(--accent)">Piyasa Özeti</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>

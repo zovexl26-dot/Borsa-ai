@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piyasa Özeti - Borsa AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117; --card: #161b22; --border: #30363d;
+            --accent: #58a6ff; --green: #3fb950; --red: #f85149;
+            --yellow: #e3b341; --text: #e6edf3; --muted: #8b949e; --surface: #21262d;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; padding: 1.5rem 1rem 3rem; }
+        .page-wrap { max-width: 1100px; margin: 0 auto; }
+        .top-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .back-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; text-decoration: none; }
+        .back-btn:hover { color: var(--text); }
+        .page-title h1 { font-size: 1.6rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+        .page-title .sub { color: var(--muted); font-size: 0.85rem; margin-top: 0.2rem; }
+        .refresh-btn { background: linear-gradient(135deg, var(--accent) 0%, #a371f7 100%); color: #fff; border: none; border-radius: 8px; padding: 0.55rem 1.2rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-decoration: none; margin-left: auto; }
+        .ozet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        .ozet-kart { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; text-align: center; }
+        .ozet-kart .icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .ozet-kart .sayi { font-size: 2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+        .ozet-kart .label { font-size: 0.78rem; color: var(--muted); margin-top: 0.25rem; }
+        .iki-kolon { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+        .mini-liste-kart { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+        .mini-liste-baslik { padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; font-weight: 600; }
+        .mini-liste-baslik.yesil { color: var(--green); }
+        .mini-liste-baslik.kirmizi { color: var(--red); }
+        .mini-liste-item { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1.25rem; border-bottom: 1px solid rgba(48,54,61,0.4); }
+        .mini-liste-item:last-child { border-bottom: none; }
+        .mini-sembol { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 0.9rem; color: var(--accent); }
+        .mini-isim { font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; }
+        .mini-degisim { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.95rem; }
+        .tablo-kart { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+        .tablo-kart-baslik { padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; font-weight: 600; color: var(--accent); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { text-align: left; color: var(--muted); font-weight: 500; padding: 0.5rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.75rem; text-transform: uppercase; }
+        td { padding: 0.65rem 1rem; border-bottom: 1px solid rgba(48,54,61,0.4); font-family: 'JetBrains Mono', monospace; font-size: 0.83rem; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        .sembol-cell { font-weight: 600; color: var(--accent); }
+        .isim-cell { font-family: 'Inter', sans-serif; color: var(--muted); font-size: 0.78rem; }
+        .analiz-cell form button { background: var(--surface); border: 1px solid var(--border); color: var(--accent); border-radius: 6px; padding: 0.25rem 0.6rem; font-size: 0.75rem; cursor: pointer; }
+        .analiz-cell form button:hover { background: rgba(88,166,255,0.1); }
+        .pos { color: var(--green); } .neg { color: var(--red); } .neu { color: var(--text); }
+        @media (max-width: 600px) { .ozet-grid { grid-template-columns: repeat(2, 1fr); } .iki-kolon { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="page-wrap">
+    <div class="top-bar">
+        <a href="/" class="back-btn">← Ana Sayfa</a>
+        <div class="page-title">
+            <h1>📊 Piyasa Özeti</h1>
+            <div class="sub">BIST Günlük Görünüm · {{ analiz_tarihi }}</div>
+        </div>
+        <a href="/ozet" class="refresh-btn">🔄 Yenile</a>
+    </div>
+
+    <div class="ozet-grid">
+        <div class="ozet-kart">
+            <div class="icon">📈</div>
+            <div class="sayi" style="color:var(--green)">{{ toplam_yukselis }}</div>
+            <div class="label">Yükselen Hisse</div>
+        </div>
+        <div class="ozet-kart">
+            <div class="icon">📉</div>
+            <div class="sayi" style="color:var(--red)">{{ toplam_dusus }}</div>
+            <div class="label">Düşen Hisse</div>
+        </div>
+        <div class="ozet-kart">
+            <div class="icon">🔍</div>
+            <div class="sayi" style="color:var(--accent)">{{ ozet_veriler|length }}</div>
+            <div class="label">Taranan Hisse</div>
+        </div>
+    </div>
+
+    <div class="iki-kolon">
+        <div class="mini-liste-kart">
+            <div class="mini-liste-baslik yesil">🚀 En Çok Yükselenler</div>
+            {% for h in en_cok_yukselenler %}
+            <div class="mini-liste-item">
+                <div>
+                    <div class="mini-sembol">{{ h.sembol }}</div>
+                    <div class="mini-isim">{{ h.sirket_adi[:20] }}</div>
+                </div>
+                <div class="mini-degisim pos">+{{ h.degisim }}%</div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="mini-liste-kart">
+            <div class="mini-liste-baslik kirmizi">📉 En Çok Düşenler</div>
+            {% for h in en_cok_dusenler %}
+            <div class="mini-liste-item">
+                <div>
+                    <div class="mini-sembol">{{ h.sembol }}</div>
+                    <div class="mini-isim">{{ h.sirket_adi[:20] }}</div>
+                </div>
+                <div class="mini-degisim neg">{{ h.degisim }}%</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="tablo-kart">
+        <div class="tablo-kart-baslik">📋 Tüm Hisseler</div>
+        <div style="overflow-x:auto">
+        <table>
+            <thead>
+                <tr>
+                    <th>Sembol</th>
+                    <th>Şirket</th>
+                    <th>Fiyat</th>
+                    <th>Değişim</th>
+                    <th>RSI</th>
+                    <th>1 Ay %</th>
+                    <th>Hacim</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in ozet_veriler %}
+                <tr>
+                    <td class="sembol-cell">{{ h.sembol }}</td>
+                    <td class="isim-cell">{{ h.sirket_adi[:20] }}</td>
+                    <td>{{ h.fiyat }} TL</td>
+                    <td class="{{ 'pos' if h.degisim > 0 else 'neg' if h.degisim < 0 else 'neu' }}">
+                        {{ '+' if h.degisim > 0 else '' }}{{ h.degisim }}%
+                    </td>
+                    <td class="{{ 'neg' if h.rsi and h.rsi > 70 else 'pos' if h.rsi and h.rsi < 30 else 'neu' }}">
+                        {{ h.rsi if h.rsi else '—' }}
+                    </td>
+                    <td class="{{ 'pos' if h.perf_1ay and h.perf_1ay > 0 else 'neg' if h.perf_1ay and h.perf_1ay < 0 else 'neu' }}">
+                        {{ ('+' if h.perf_1ay > 0 else '') + "%.1f"|format(h.perf_1ay) + '%' if h.perf_1ay else '—' }}
+                    </td>
+                    <td>{{ format_buyuk_sayi(h.hacim) }}</td>
+                    <td class="analiz-cell">
+                        <form action="/analyze" method="POST">
+                            <input type="hidden" name="sembol" value="{{ h.sembol }}">
+                            <button type="submit">Analiz</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <div style="margin-top:1.5rem;text-align:center">
+        <p style="color:var(--muted);font-size:0.75rem">
+            ⚠️ Yatırım tavsiyesi değildir. · <a href="/firsatlar" style="color:var(--accent)">Fırsat Hisseleri</a> · <a href="/karsilastir" style="color:var(--accent)">Hisse Karşılaştır</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>
