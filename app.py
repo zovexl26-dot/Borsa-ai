@@ -826,6 +826,30 @@ def karsilastir():
     )
 
 
+@app.route("/portfolyo")
+def portfolyo():
+    return render_template("portfolyo.html")
+
+
+@app.route("/api/fiyatlar")
+def api_fiyatlar():
+    semboller_str = request.args.get("semboller", "")
+    if not semboller_str:
+        return jsonify({})
+    semboller = [s.strip().upper() for s in semboller_str.split(",") if s.strip()]
+    fiyatlar = {}
+    for sembol in semboller:
+        try:
+            tam_sembol = sembol if sembol.endswith(".IS") else sembol + ".IS"
+            hisse = yf.Ticker(tam_sembol)
+            tarihsel = hisse.history(period="1d", auto_adjust=True)
+            if not tarihsel.empty:
+                fiyatlar[sembol] = round(float(tarihsel["Close"].iloc[-1]), 2)
+        except Exception as e:
+            print(f"Fiyat hatasi {sembol}: {e}")
+    return jsonify(fiyatlar)
+
+
 @app.route("/ozet")
 def piyasa_ozeti():
     ozet_veriler = []
