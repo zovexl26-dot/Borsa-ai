@@ -20,11 +20,20 @@ client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
 CLAUDE_MODEL = "claude-haiku-4-5-20251001"
 
+TARAMA_LISTESI = [
+    "THYAO.IS", "GARAN.IS", "AKBNK.IS", "EREGL.IS", "ASELS.IS",
+    "KCHOL.IS", "BIMAS.IS", "TCELL.IS", "FROTO.IS", "TUPRS.IS",
+    "ISCTR.IS", "YKBNK.IS", "HALKB.IS", "PGSUS.IS", "TOASO.IS",
+    "SAHOL.IS", "SISE.IS", "TTKOM.IS", "AYGAZ.IS", "KRDMD.IS",
+    "MIGROS.IS", "SOKM.IS", "OTKAR.IS", "DOAS.IS", "PETKM.IS",
+    "KOZAL.IS", "EKGYO.IS", "TAVHL.IS", "ULKER.IS", "LOGO.IS",
+]
+
 SECTOR_PEERS = {
     "Otomotiv": ["FROTO.IS", "TOASO.IS", "OTKAR.IS", "DOAS.IS"],
     "Bankacilik": ["GARAN.IS", "AKBNK.IS", "ISCTR.IS", "YKBNK.IS", "HALKB.IS"],
     "Havacilik": ["THYAO.IS", "PGSUS.IS"],
-    "Savunma": ["ASELS.IS", "ROKET.IS"],
+    "Savunma": ["ASELS.IS"],
     "Demir-Celik": ["EREGL.IS", "KRDMD.IS"],
     "Perakende": ["BIMAS.IS", "MIGROS.IS", "SOKM.IS"],
     "Petrol": ["TUPRS.IS", "AYGAZ.IS"],
@@ -107,7 +116,6 @@ def rsi_hesapla(kapanislar, periyot=14):
         delta = kapanislar.diff()
         kazan = delta.clip(lower=0)
         kayip = (-delta).clip(lower=0)
-        # Wilder's RMA (TradingView ile birebir)
         alpha = 1.0 / periyot
         ort_kazan = kazan.ewm(alpha=alpha, adjust=False, min_periods=periyot).mean()
         ort_kayip = kayip.ewm(alpha=alpha, adjust=False, min_periods=periyot).mean()
@@ -467,7 +475,6 @@ def kap_haber_cek(sembol):
 def haber_cek(sembol, sirket_adi):
     tum_haberler = []
     seen = set()
-
     for kaynak_fn in [lambda: kap_haber_cek(sembol),
                       lambda: google_news_cek(sembol, sirket_adi),
                       lambda: yfinance_haber_cek(sembol)]:
@@ -479,7 +486,6 @@ def haber_cek(sembol, sirket_adi):
                     tum_haberler.append(h)
         except Exception as e:
             print(f"Haber hatasi: {e}")
-
     return tum_haberler[:12]
 
 
@@ -582,6 +588,44 @@ def yedek_degerlendirme_hesapla(teknik, temel):
         tavsiye, tavsiye_renk = "GUCLU SAT", "guclu-sat"
 
     return {"tavsiye": tavsiye, "tavsiye_renk": tavsiye_renk, "puan": puan, "pozitif": pozitif[:3], "riskler": riskler[:3]}
+
+
+def firsat_puani_hesapla(teknik, temel):
+    puan = 0
+    nedenler = []
+
+    rsi = teknik.get("rsi") if teknik else None
+    if rsi:
+        if rsi < 30:
+            puan += 30; nedenler.append(f"RSI {rsi:.0f} — Asiri Satim")
+        elif rsi < 40:
+            puan += 20; nedenler.append(f"RSI {rsi:.0f} — Dusuk Seviye")
+        elif rsi < 50:
+            puan += 10; nedenler.append(f"RSI {rsi:.0f} — Notr Alt")
+
+    if teknik:
+        if teknik.get("macd_histogram") and teknik["macd_histogram"] > 0:
+            puan += 15; nedenler.append("MACD pozitife dondü")
+
+        hacim = teknik.get("hacim", 0)
+        ort_hacim = teknik.get("ort_hacim", 1)
+        if ort_hacim and hacim > ort_hacim * 1.5:
+            puan += 15; nedenler.append("Hacim ortalamanin %50 üzerinde")
+
+        if teknik.get("ma20_durum") == "Üzerinde" and teknik.get("ma50_durum") == "Altinda":
+            puan += 10; nedenler.append("MA20 üzerinde, MA50 kirilıyor")
+
+    pe = temel.get("pe_orani") if temel else None
+    if pe and 0 < pe < 10:
+        puan += 15; nedenler.append(f"F/K {pe:.1f}x — Cok ucuz")
+    elif pe and pe < 15:
+        puan += 8; nedenler.append(f"F/K {pe:.1f}x — Ucuz")
+
+    pb = temel.get("pb_orani") if temel else None
+    if pb and pb < 1:
+        puan += 10; nedenler.append(f"PD/DD {pb:.2f}x — Defter alti")
+
+    return puan, nedenler[:3]
 
 
 def ai_analiz_olustur(sembol, teknik, temel, rakipler, haberler, sektor_adi):
@@ -708,6 +752,127 @@ def analiz_et():
         ai_raporu=ai_raporu,
         yedek_degerlendirme=yedek_degerlendirme,
         sentiment=genel_sentiment_hesapla(haberler or []),
+        format_buyuk_sayi=format_buyuk_sayi,
+        analiz_tarihi=datetime.now().strftime("%d.%m.%Y %H:%M"),
+    )
+
+
+@app.route("/firsatlar")
+def firsatlar():
+    firsatlar_listesi = []
+    for sembol in TARAMA_LISTESI:
+        try:
+            teknik = teknik_veri_cek(sembol)
+            if not teknik:
+                continue
+            temel = temel_veri_cek(sembol)
+            puan, nedenler = firsat_puani_hesapla(teknik, temel)
+            if puan >= 20:
+                firsatlar_listesi.append({
+                    "sembol": sembol.replace(".IS", ""),
+                    "sirket_adi": temel.get("sirket_adi", sembol.replace(".IS", "")),
+                    "fiyat": teknik.get("guncel_fiyat"),
+                    "degisim": teknik.get("gunluk_degisim"),
+                    "rsi": teknik.get("rsi"),
+                    "puan": puan,
+                    "nedenler": nedenler,
+                    "pe": temel.get("pe_orani"),
+                    "macd_histogram": teknik.get("macd_histogram"),
+                })
+        except Exception as e:
+            print(f"Firsat tarama hatasi {sembol}: {e}")
+            continue
+
+    firsatlar_listesi.sort(key=lambda x: x["puan"], reverse=True)
+
+    return render_template(
+        "firsatlar.html",
+        firsatlar=firsatlar_listesi[:10],
+        analiz_tarihi=datetime.now().strftime("%d.%m.%Y %H:%M"),
+    )
+
+
+@app.route("/karsilastir", methods=["GET", "POST"])
+def karsilastir():
+    teknik1 = teknik2 = temel1 = temel2 = None
+    sembol1 = sembol2 = ""
+    hata = None
+
+    if request.method == "POST":
+        sembol1_ham = request.form.get("sembol1", "").strip()
+        sembol2_ham = request.form.get("sembol2", "").strip()
+
+        if not sembol1_ham or not sembol2_ham:
+            hata = "Lutfen iki hisse sembolu girin."
+        else:
+            sembol1 = sembol_duzenle(sembol1_ham)
+            sembol2 = sembol_duzenle(sembol2_ham)
+            teknik1 = teknik_veri_cek(sembol1)
+            teknik2 = teknik_veri_cek(sembol2)
+            temel1 = temel_veri_cek(sembol1)
+            temel2 = temel_veri_cek(sembol2)
+
+            if not teknik1:
+                hata = f"{sembol1.replace('.IS','')} bulunamadi."
+            elif not teknik2:
+                hata = f"{sembol2.replace('.IS','')} bulunamadi."
+
+    return render_template(
+        "karsilastir.html",
+        sembol1=sembol1.replace(".IS", "") if sembol1 else "",
+        sembol2=sembol2.replace(".IS", "") if sembol2 else "",
+        teknik1=teknik1,
+        teknik2=teknik2,
+        temel1=temel1,
+        temel2=temel2,
+        hata=hata,
+        format_buyuk_sayi=format_buyuk_sayi,
+        analiz_tarihi=datetime.now().strftime("%d.%m.%Y %H:%M"),
+    )
+
+
+@app.route("/ozet")
+def piyasa_ozeti():
+    ozet_veriler = []
+    toplam_yukselis = 0
+    toplam_dusus = 0
+
+    for sembol in TARAMA_LISTESI[:15]:
+        try:
+            teknik = teknik_veri_cek(sembol)
+            if not teknik:
+                continue
+            temel = temel_veri_cek(sembol)
+            degisim = teknik.get("gunluk_degisim", 0) or 0
+            if degisim > 0:
+                toplam_yukselis += 1
+            else:
+                toplam_dusus += 1
+
+            ozet_veriler.append({
+                "sembol": sembol.replace(".IS", ""),
+                "sirket_adi": temel.get("sirket_adi", sembol.replace(".IS", "")),
+                "fiyat": teknik.get("guncel_fiyat"),
+                "degisim": degisim,
+                "rsi": teknik.get("rsi"),
+                "hacim": teknik.get("hacim"),
+                "perf_1ay": teknik.get("perf_1ay"),
+            })
+        except Exception as e:
+            print(f"Ozet hatasi {sembol}: {e}")
+            continue
+
+    ozet_veriler.sort(key=lambda x: x["degisim"] or 0, reverse=True)
+    en_cok_yukselenler = ozet_veriler[:3]
+    en_cok_dusenler = sorted(ozet_veriler, key=lambda x: x["degisim"] or 0)[:3]
+
+    return render_template(
+        "ozet.html",
+        ozet_veriler=ozet_veriler,
+        en_cok_yukselenler=en_cok_yukselenler,
+        en_cok_dusenler=en_cok_dusenler,
+        toplam_yukselis=toplam_yukselis,
+        toplam_dusus=toplam_dusus,
         format_buyuk_sayi=format_buyuk_sayi,
         analiz_tarihi=datetime.now().strftime("%d.%m.%Y %H:%M"),
     )
