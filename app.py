@@ -23,10 +23,6 @@ CLAUDE_MODEL = "claude-haiku-4-5-20251001"
 TARAMA_LISTESI = [
     "THYAO.IS", "GARAN.IS", "AKBNK.IS", "EREGL.IS", "ASELS.IS",
     "KCHOL.IS", "BIMAS.IS", "TCELL.IS", "FROTO.IS", "TUPRS.IS",
-    "ISCTR.IS", "YKBNK.IS", "HALKB.IS", "PGSUS.IS", "TOASO.IS",
-    "SAHOL.IS", "SISE.IS", "TTKOM.IS", "AYGAZ.IS", "KRDMD.IS",
-    "MIGROS.IS", "SOKM.IS", "OTKAR.IS", "DOAS.IS", "PETKM.IS",
-    "KOZAL.IS", "EKGYO.IS", "TAVHL.IS", "ULKER.IS", "LOGO.IS",
 ]
 
 SECTOR_PEERS = {
@@ -765,18 +761,17 @@ def firsatlar():
             teknik = teknik_veri_cek(sembol)
             if not teknik:
                 continue
-            temel = temel_veri_cek(sembol)
-            puan, nedenler = firsat_puani_hesapla(teknik, temel)
-            if puan >= 20:
+            puan, nedenler = firsat_puani_hesapla(teknik, {})
+            if puan >= 15:
                 firsatlar_listesi.append({
                     "sembol": sembol.replace(".IS", ""),
-                    "sirket_adi": temel.get("sirket_adi", sembol.replace(".IS", "")),
+                    "sirket_adi": sembol.replace(".IS", ""),
                     "fiyat": teknik.get("guncel_fiyat"),
                     "degisim": teknik.get("gunluk_degisim"),
                     "rsi": teknik.get("rsi"),
                     "puan": puan,
                     "nedenler": nedenler,
-                    "pe": temel.get("pe_orani"),
+                    "pe": None,
                     "macd_histogram": teknik.get("macd_histogram"),
                 })
         except Exception as e:
