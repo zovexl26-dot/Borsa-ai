@@ -8,46 +8,60 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0d1117; --card: #161b22; --border: #30363d;
-            --accent: #58a6ff; --green: #3fb950; --red: #f85149;
-            --yellow: #e3b341; --text: #e6edf3; --muted: #8b949e; --surface: #21262d;
+            --bg: #f4f6f9;
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --accent: #1a3c6e;
+            --accent2: #c9a84c;
+            --green: #1a7f4b;
+            --red: #c0392b;
+            --text: #1a202c;
+            --muted: #64748b;
+            --surface: #f1f4f8;
+            --nav-bg: #dce3ed;
+            --shadow: 0 2px 16px rgba(26,60,110,0.08);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1rem; }
         .container { max-width: 560px; width: 100%; }
         .logo { text-align: center; margin-bottom: 2rem; }
-        .logo h1 { font-family: 'JetBrains Mono', monospace; font-size: 2rem; font-weight: 700; color: var(--accent); letter-spacing: -0.02em; }
+        .logo h1 { font-family: 'JetBrains Mono', monospace; font-size: 2.2rem; font-weight: 700; color: var(--accent); letter-spacing: -0.02em; }
+        .logo h1 span { color: var(--accent2); }
         .logo p { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; }
         .nav-butonlar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.25rem; }
-        .nav-btn { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 0.85rem 0.5rem; text-align: center; text-decoration: none; color: var(--text); transition: all 0.15s; }
-        .nav-btn:hover { border-color: var(--accent); background: rgba(88,166,255,0.06); }
-        .nav-btn .nav-icon { font-size: 1.3rem; margin-bottom: 0.3rem; }
-        .nav-btn .nav-label { font-size: 0.75rem; color: var(--muted); font-weight: 500; }
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; }
+        .nav-btn { background: var(--nav-bg); border: 2px solid #b8c5d6; border-radius: 14px; padding: 1rem 0.5rem; text-align: center; text-decoration: none; color: var(--accent); transition: all 0.15s; box-shadow: 0 1px 4px rgba(26,60,110,0.07); }
+        .nav-btn:hover { border-color: var(--accent2); background: #e8e0cc; transform: translateY(-2px); box-shadow: 0 4px 16px rgba(201,168,76,0.18); }
+        .nav-icon { font-size: 1.5rem; margin-bottom: 0.35rem; }
+        .nav-label { font-size: 0.78rem; color: var(--accent); font-weight: 700; letter-spacing: 0.01em; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 2rem; box-shadow: var(--shadow); }
         .form-group { margin-bottom: 1.25rem; }
-        label { display: block; font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; font-weight: 500; }
-        input[type="text"] { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1rem; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; outline: none; transition: border-color 0.2s; }
+        label { display: block; font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; font-weight: 600; }
+        input[type="text"] { width: 100%; background: var(--surface); border: 2px solid var(--border); border-radius: 10px; padding: 0.85rem 1rem; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; outline: none; transition: border-color 0.2s; }
         input[type="text"]:focus { border-color: var(--accent); }
-        input[type="text"]::placeholder { color: var(--muted); font-weight: 400; text-transform: none; letter-spacing: 0; }
-        .btn { width: 100%; background: linear-gradient(135deg, var(--accent) 0%, #a371f7 100%); color: #fff; border: none; border-radius: 10px; padding: 0.9rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; margin-top: 0.5rem; }
-        .btn:hover { opacity: 0.9; }
-        .error { background: rgba(248,81,73,0.1); border: 1px solid rgba(248,81,73,0.3); border-radius: 8px; padding: 0.75rem 1rem; color: var(--red); font-size: 0.85rem; margin-bottom: 1rem; }
+        input[type="text"]::placeholder { color: #b0bec5; font-weight: 400; text-transform: none; letter-spacing: 0; }
+        .btn { width: 100%; background: linear-gradient(135deg, var(--accent) 0%, #2d5fa6 100%); color: #fff; border: none; border-radius: 10px; padding: 0.95rem; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 0.5rem; }
+        .btn:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(26,60,110,0.25); }
+        .error { background: #fff5f5; border: 1px solid #feb2b2; border-radius: 8px; padding: 0.75rem 1rem; color: var(--red); font-size: 0.85rem; margin-bottom: 1rem; }
         .quick-picks { margin-top: 1.5rem; }
-        .quick-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem; }
+        .quick-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem; font-weight: 600; }
         .picks { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-        .pick-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.4rem 0.85rem; color: var(--muted); font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; cursor: pointer; transition: all 0.15s; }
-        .pick-btn:hover { color: var(--accent); border-color: var(--accent); background: rgba(88,166,255,0.08); }
+        .pick-btn { background: var(--surface); border: 1.5px solid var(--border); border-radius: 8px; padding: 0.4rem 0.85rem; color: var(--muted); font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; cursor: pointer; transition: all 0.15s; font-weight: 500; }
+        .pick-btn:hover { color: var(--accent); border-color: var(--accent2); background: #fffbf0; }
         .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-top: 1.5rem; }
         .feature { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem; text-align: center; }
         .feature-icon { font-size: 1.3rem; margin-bottom: 0.35rem; }
-        .feature-text { font-size: 0.72rem; color: var(--muted); line-height: 1.4; }
-        .footer { text-align: center; margin-top: 1.5rem; color: var(--muted); font-size: 0.75rem; }
+        .feature-text { font-size: 0.72rem; color: var(--muted); line-height: 1.4; font-weight: 500; }
+        .footer { text-align: center; margin-top: 1.5rem; color: var(--muted); font-size: 0.75rem; line-height: 2; }
+        .made-by { margin-top: 0.75rem; font-size: 0.95rem; color: var(--accent); font-weight: 700; }
+        .made-by span { color: var(--accent2); }
+        .insta-link { display: inline-block; margin-top: 0.4rem; font-size: 0.95rem; color: #fff; background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045); border-radius: 8px; padding: 0.35rem 1rem; font-weight: 700; text-decoration: none; letter-spacing: 0.02em; }
+        .insta-link:hover { opacity: 0.88; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="logo">
-        <h1>📈 Borsa AI</h1>
+        <h1>📈 Borsa <span>AI</span></h1>
         <p>BIST hisseleri için yapay zeka destekli analiz platformu</p>
     </div>
 
@@ -97,6 +111,8 @@
 
     <div class="footer">
         ⚠️ Bu platform yatırım tavsiyesi vermez. Veriler: Yahoo Finance · KAP · Google Haberler
+        <div class="made-by">Made by <span>Ahmet İlhan Arıkan</span></div>
+        <a href="https://instagram.com/ahmet.ariikan" target="_blank" class="insta-link">📸 @ahmet.ariikan</a>
     </div>
 </div>
 </body>
