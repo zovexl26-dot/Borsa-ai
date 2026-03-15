@@ -1,7 +1,7 @@
 import os
 import math
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from xml.etree import ElementTree as ET
 from email.utils import parsedate_to_datetime
 from flask import Flask, render_template, request, jsonify
@@ -48,6 +48,20 @@ HTTP_HEADERS = {
     "Accept": "application/json, text/html, */*",
     "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.8",
 }
+
+POZITIF_KELIMELER = [
+    "artış", "yükseliş", "büyüme", "kâr", "kar", "rekor", "güçlü", "olumlu",
+    "başarı", "kazanç", "temettü", "ihracat", "anlaşma", "sözleşme", "yatırım",
+    "genişleme", "prim", "rally", "toparlanma", "iyileşme", "beat", "üzerinde",
+    "arttı", "yükseldi", "pozitif", "strong", "gain", "rise", "up", "growth"
+]
+
+OLUMSUZ_KELIMELER = [
+    "düşüş", "kayıp", "zarar", "risk", "uyarı", "endişe", "gerileme", "kriz",
+    "satış", "baskı", "zayıf", "olumsuz", "iflas", "borç", "dava", "soruşturma",
+    "ceza", "azalış", "düştü", "geriledi", "negatif", "weak", "loss", "down",
+    "fall", "drop", "decline", "below", "miss", "sell"
+]
 
 
 def temizle_sayi(deger):
@@ -325,6 +339,17 @@ def _haber_dict(baslik, kaynak, url="", tarih="", ozet="", baslik_tr=""):
     }
 
 
+def keyword_sentiment(baslik):
+    baslik_lower = baslik.lower()
+    poz = sum(1 for k in POZITIF_KELIMELER if k in baslik_lower)
+    olum = sum(1 for k in OLUMSUZ_KELIMELER if k in baslik_lower)
+    if poz > olum:
+        return "Olumlu"
+    elif olum > poz:
+        return "Olumsuz"
+    return "Notr"
+
+
 def yfinance_haber_cek(sembol):
     haberler = []
     try:
@@ -354,7 +379,8 @@ def google_news_cek(sembol, sirket_adi):
     haberler = []
     try:
         sembol_kisa = sembol.replace(".IS", "")
-        arama = requests.utils.quote(f"{sembol_kisa} {sirket_adi} hisse")
+        yedi_gun_once = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+        arama = requests.utils.quote(f"{sembol_kisa} {sirket_adi} hisse after:{yedi_gun_once}")
         url = f"https://news.google.com/rss/search?q={arama}&hl=tr&gl=TR&ceid=TR:tr"
         yanit = requests.get(url, headers=HTTP_HEADERS, timeout=8)
         if yanit.status_code != 200:
@@ -458,82 +484,10 @@ def haber_cek(sembol, sirket_adi):
 def haber_cevir_ve_sentiment(haberler, sirket_adi):
     if not haberler:
         return haberler
-
-    ceviri_gerekli = [(i, h) for i, h in enumerate(haberler) if h.get("kaynak") != "KAP"]
-
-    if ceviri_gerekli:
-        try:
-            baslik_listesi = "\n".join([f"{idx+1}. {h['baslik']}" for idx, (_, h) in enumerate(ceviri_gerekli)])
-            prompt = f"""{sirket_adi} sirketiyle ilgili asagidaki haber basliklarini Turkceye cevir ve hisse senedi uzerindeki duygu etkisini belirle.
-
-Basliklar:
-{baslik_listesi}
-
-Yanit formati (SADECE bu satirlari yaz):
-1. [Turkce ceviri] | [Olumlu/Olumsuz/Notr]
-2. [Turkce ceviri] | [Olumlu/Olumsuz/Notr]"""
-
-            mesaj = client.messages.create(
-                model=CLAUDE_MODEL, max_tokens=600, timeout=30.0,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            satirlar = mesaj.content[0].text.strip().split("\n")
-            for satir in satirlar:
-                satir = satir.strip()
-                if not satir or ". " not in satir:
-                    continue
-                try:
-                    idx_str, geri = satir.split(". ", 1)
-                    local_idx = int(idx_str.strip()) - 1
-                    if "|" in geri:
-                        ceviri, sent_str = geri.rsplit("|", 1)
-                        ceviri = ceviri.strip()
-                        sent_str = sent_str.strip().lower()
-                        sent = "Olumlu" if "olumlu" in sent_str else "Olumsuz" if "olumsuz" in sent_str else "Notr"
-                        if 0 <= local_idx < len(ceviri_gerekli):
-                            orig_idx, _ = ceviri_gerekli[local_idx]
-                            haberler[orig_idx]["baslik_tr"] = ceviri
-                            haberler[orig_idx]["sentiment_bireysel"] = sent
-                except Exception:
-                    continue
-        except Exception as e:
-            print(f"Haber ceviri hatasi: {e}")
-
-    kap_haberleri = [(i, h) for i, h in enumerate(haberler) if h.get("kaynak") == "KAP"]
-    if kap_haberleri:
-        try:
-            baslik_listesi = "\n".join([f"{idx+1}. {h['baslik_tr']}" for idx, (_, h) in enumerate(kap_haberleri)])
-            prompt2 = f"""{sirket_adi} KAP bildirim basliklar icin hisse senedi duygu analizi yap.
-Basliklar:
-{baslik_listesi}
-
-Yanit formati (SADECE bu satirlari yaz):
-1. [Olumlu/Olumsuz/Notr]
-2. [Olumlu/Olumsuz/Notr]"""
-            mesaj2 = client.messages.create(
-                model=CLAUDE_MODEL, max_tokens=200, timeout=20.0,
-                messages=[{"role": "user", "content": prompt2}]
-            )
-            for satir in mesaj2.content[0].text.strip().split("\n"):
-                satir = satir.strip()
-                if not satir or ". " not in satir:
-                    continue
-                try:
-                    idx_str, sent_str = satir.split(". ", 1)
-                    local_idx = int(idx_str.strip()) - 1
-                    sent = "Olumlu" if "olumlu" in sent_str.lower() else "Olumsuz" if "olumsuz" in sent_str.lower() else "Notr"
-                    if 0 <= local_idx < len(kap_haberleri):
-                        orig_idx, _ = kap_haberleri[local_idx]
-                        haberler[orig_idx]["sentiment_bireysel"] = sent
-                except Exception:
-                    continue
-        except Exception as e:
-            print(f"KAP sentiment hatasi: {e}")
-
     for h in haberler:
         if not h.get("baslik_tr"):
             h["baslik_tr"] = h["baslik"]
-
+        h["sentiment_bireysel"] = keyword_sentiment(h.get("baslik_tr") or h.get("baslik", ""))
     return haberler
 
 
@@ -676,7 +630,7 @@ Asagidaki basliklarla analiz yaz:
     try:
         mesaj = client.messages.create(
             model=CLAUDE_MODEL, max_tokens=2000, timeout=60.0,
-            system="Sen uzman bir Turk borsa analistisin. Yanıtın tamamen Türkçe olsun.",
+            system="Sen uzman bir Turk borsa analistisin. Yanitinin tamamen Turkce olsun.",
             messages=[{"role": "user", "content": prompt}]
         )
         return mesaj.content[0].text
