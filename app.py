@@ -779,7 +779,6 @@ def firsatlar():
             continue
 
     firsatlar_listesi.sort(key=lambda x: x["puan"], reverse=True)
-
     return render_template(
         "firsatlar.html",
         firsatlar=firsatlar_listesi[:10],
@@ -893,6 +892,64 @@ def piyasa_ozeti():
         toplam_yukselis=toplam_yukselis,
         toplam_dusus=toplam_dusus,
         format_buyuk_sayi=format_buyuk_sayi,
+        analiz_tarihi=datetime.now().strftime("%d.%m.%Y %H:%M"),
+    )
+
+
+@app.route("/haberler")
+def genel_haberler():
+    haberler = []
+    seen = set()
+    uc_ay_once = (datetime.now() - timedelta(days=90)).strftime("%Y-%m-%d")
+
+    # BIST genel haberleri
+    for arama_str, kategori in [
+        (f"BIST borsa hisse after:{uc_ay_once}", "Borsa"),
+        (f"Turkiye ekonomi enflasyon faiz after:{uc_ay_once}", "Ekonomi"),
+        (f"Turkiye sirket kapasite ihracat after:{uc_ay_once}", "Sirket"),
+    ]:
+        try:
+            arama = requests.utils.quote(arama_str)
+            url = f"https://news.google.com/rss/search?q={arama}&hl=tr&gl=TR&ceid=TR:tr"
+            yanit = requests.get(url, headers=HTTP_HEADERS, timeout=8)
+            if yanit.status_code != 200:
+                continue
+            root = ET.fromstring(yanit.content)
+            channel = root.find("channel")
+            if not channel:
+                continue
+            for item in channel.findall("item")[:10]:
+                baslik = item.findtext("title") or ""
+                if not baslik:
+                    continue
+                key = baslik[:60]
+                if key in seen:
+                    continue
+                seen.add(key)
+                link = item.findtext("link") or ""
+                pub_date = item.findtext("pubDate") or ""
+                kaynak_el = item.find("source")
+                kaynak = kaynak_el.text if kaynak_el is not None else "Google Haberler"
+                tarih = ""
+                if pub_date:
+                    try:
+                        tarih = parsedate_to_datetime(pub_date).strftime("%d.%m.%Y %H:%M")
+                    except Exception:
+                        tarih = pub_date[:10]
+                haberler.append({
+                    "baslik": baslik,
+                    "kaynak": kaynak,
+                    "url": link,
+                    "tarih": tarih,
+                    "sentiment": keyword_sentiment(baslik),
+                    "kategori": kategori,
+                })
+        except Exception as e:
+            print(f"Genel haber hatasi {kategori}: {e}")
+
+    return render_template(
+        "haberler.html",
+        haberler=haberler,
         analiz_tarihi=datetime.now().strftime("%d.%m.%Y %H:%M"),
     )
 
