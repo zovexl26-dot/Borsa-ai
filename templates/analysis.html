@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,20 +8,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <style>
-        :root {
+        [data-theme="light"] {
             --bg: #f4f6f9; --card: #ffffff; --border: #e2e8f0;
             --accent: #1a3c6e; --accent2: #c9a84c;
-            --green: #1a7f4b; --red: #c0392b;
-            --yellow: #b7860b; --text: #1a202c; --muted: #64748b;
+            --green: #1a7f4b; --red: #c0392b; --yellow: #b7860b;
+            --text: #1a202c; --muted: #64748b;
             --surface: #f1f4f8; --nav-bg: #dce3ed;
             --shadow: 0 2px 16px rgba(26,60,110,0.08);
+            --toggle-bg: #dce3ed; --toggle-border: #b8c5d6;
+        }
+        [data-theme="dark"] {
+            --bg: #0d1117; --card: #161b22; --border: #30363d;
+            --accent: #58a6ff; --accent2: #e3b341;
+            --green: #3fb950; --red: #f85149; --yellow: #e3b341;
+            --text: #e6edf3; --muted: #8b949e;
+            --surface: #21262d; --nav-bg: #21262d;
+            --shadow: 0 2px 16px rgba(0,0,0,0.3);
+            --toggle-bg: #21262d; --toggle-border: #30363d;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; padding: 1.5rem 1rem 3rem; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; padding: 1.5rem 1rem 3rem; transition: background 0.2s, color 0.2s; }
+        .tema-btn { position: fixed; top: 1rem; right: 1rem; background: var(--toggle-bg); border: 1.5px solid var(--toggle-border); border-radius: 50%; width: 42px; height: 42px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 999; box-shadow: var(--shadow); transition: all 0.2s; }
+        .tema-btn:hover { transform: scale(1.1); }
         .page-wrap { max-width: 1100px; margin: 0 auto; }
         .top-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
-        .back-btn { background: var(--nav-bg); border: 1.5px solid #b8c5d6; color: var(--accent); border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; text-decoration: none; font-weight: 600; }
-        .back-btn:hover { background: #cdd5e0; }
+        .back-btn { background: var(--nav-bg); border: 1.5px solid var(--toggle-border); color: var(--accent); border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; text-decoration: none; font-weight: 600; }
+        .back-btn:hover { opacity: 0.8; }
         .page-title { flex: 1; }
         .page-title h1 { font-size: 1.6rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
         .page-title .company { color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
@@ -35,7 +47,7 @@
         .sections { display: grid; gap: 1.25rem; }
         .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); }
         .card-header { display: flex; align-items: center; gap: 0.6rem; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; background: var(--surface); }
-        .card-header:hover { background: #e8edf4; }
+        .card-header:hover { opacity: 0.85; }
         .card-icon { font-size: 1.1rem; }
         .card-title { font-size: 0.95rem; font-weight: 700; flex: 1; color: var(--accent); }
         .card-toggle { color: var(--muted); font-size: 0.8rem; transition: transform 0.2s; }
@@ -55,7 +67,7 @@
         .sector-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         .sector-table th { text-align: left; color: var(--muted); font-weight: 600; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); font-size: 0.75rem; text-transform: uppercase; background: var(--surface); }
         .sector-table td { padding: 0.6rem 0.6rem; border-bottom: 1px solid var(--border); font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; }
-        .sector-table tr.highlight td { background: rgba(26,60,110,0.04); }
+        .sector-table tr.highlight td { background: rgba(88,166,255,0.05); }
         .sector-table .sym-cell { font-weight: 700; color: var(--accent); }
         .news-list { display: flex; flex-direction: column; gap: 0.75rem; }
         .news-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.9rem 1rem; }
@@ -66,11 +78,11 @@
         .rating-box { display: flex; flex-direction: column; gap: 1rem; }
         .rating-badge-wrap { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
         .rating-badge { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.7rem 1.8rem; border-radius: 12px; font-weight: 800; font-size: 1.2rem; min-width: 140px; }
-        .rating-badge.guclu-al { background: rgba(26,127,75,0.1); color: #1a7f4b; border: 2px solid rgba(26,127,75,0.3); }
-        .rating-badge.al { background: rgba(26,127,75,0.07); color: #1a7f4b; border: 2px solid rgba(26,127,75,0.2); }
-        .rating-badge.tut { background: rgba(183,134,11,0.1); color: #b7860b; border: 2px solid rgba(183,134,11,0.3); }
-        .rating-badge.sat { background: rgba(192,57,43,0.08); color: #c0392b; border: 2px solid rgba(192,57,43,0.25); }
-        .rating-badge.guclu-sat { background: rgba(192,57,43,0.12); color: #c0392b; border: 2px solid rgba(192,57,43,0.35); }
+        .rating-badge.guclu-al { background: rgba(63,185,80,0.15); color: var(--green); border: 2px solid rgba(63,185,80,0.3); }
+        .rating-badge.al { background: rgba(63,185,80,0.1); color: var(--green); border: 2px solid rgba(63,185,80,0.2); }
+        .rating-badge.tut { background: rgba(227,179,65,0.15); color: var(--yellow); border: 2px solid rgba(227,179,65,0.3); }
+        .rating-badge.sat { background: rgba(248,81,73,0.1); color: var(--red); border: 2px solid rgba(248,81,73,0.25); }
+        .rating-badge.guclu-sat { background: rgba(248,81,73,0.15); color: var(--red); border: 2px solid rgba(248,81,73,0.35); }
         .badge-label { font-size: 0.65rem; font-weight: 600; opacity: 0.7; margin-bottom: 0.15rem; letter-spacing: 0.08em; text-transform: uppercase; }
         .rating-score-ring { width: 72px; height: 72px; border-radius: 50%; border: 4px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--surface); }
         .score-val { font-size: 1.3rem; font-weight: 800; line-height: 1; }
@@ -92,9 +104,9 @@
         .ai-report p { margin-bottom: 0.6rem; }
         .tahmin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
         .tahmin-kart { border-radius: 12px; padding: 1.1rem 1rem; text-align: center; border: 2px solid; }
-        .tahmin-kart.olumlu { background: rgba(26,127,75,0.06); border-color: rgba(26,127,75,0.25); }
-        .tahmin-kart.notr { background: rgba(183,134,11,0.06); border-color: rgba(183,134,11,0.25); }
-        .tahmin-kart.olumsuz { background: rgba(192,57,43,0.06); border-color: rgba(192,57,43,0.2); }
+        .tahmin-kart.olumlu { background: rgba(63,185,80,0.08); border-color: rgba(63,185,80,0.3); }
+        .tahmin-kart.notr { background: rgba(227,179,65,0.08); border-color: rgba(227,179,65,0.3); }
+        .tahmin-kart.olumsuz { background: rgba(248,81,73,0.08); border-color: rgba(248,81,73,0.25); }
         .tahmin-vade { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 0.4rem; }
         .tahmin-durum { font-size: 1rem; font-weight: 800; margin-bottom: 0.3rem; }
         .tahmin-kart.olumlu .tahmin-durum { color: var(--green); }
@@ -119,6 +131,7 @@
     </style>
 </head>
 <body>
+<button class="tema-btn" onclick="temaToggle()" id="temaBtn">🌙</button>
 <div class="page-wrap">
     <div class="top-bar">
         <a href="/" class="back-btn">← Yeni Hisse</a>
@@ -194,73 +207,28 @@
             {% set ma200 = teknik.ma200 or fiyat %}
             {% set perf1ay = teknik.perf_1ay or 0 %}
             {% set perf3ay = teknik.perf_3ay or 0 %}
-
             {% set kisa_puan = 0 %}
             {% if rsi < 35 %}{% set kisa_puan = kisa_puan + 2 %}{% elif rsi < 45 %}{% set kisa_puan = kisa_puan + 1 %}{% elif rsi > 65 %}{% set kisa_puan = kisa_puan - 2 %}{% elif rsi > 55 %}{% set kisa_puan = kisa_puan - 1 %}{% endif %}
             {% if macd_h > 0 %}{% set kisa_puan = kisa_puan + 1 %}{% else %}{% set kisa_puan = kisa_puan - 1 %}{% endif %}
             {% if fiyat > ma20 %}{% set kisa_puan = kisa_puan + 1 %}{% else %}{% set kisa_puan = kisa_puan - 1 %}{% endif %}
-
-            {% if kisa_puan >= 2 %}
-                {% set kisa_durum = "Olumlu" %}{% set kisa_class = "olumlu" %}{% set kisa_emoji = "📈" %}
-                {% set kisa_hedef = (fiyat * 1.04) | round(2) %}
-                {% set kisa_alt = (fiyat * 0.99) | round(2) %}
-                {% set kisa_neden = "RSI ve MACD pozitif sinyal veriyor" %}
-            {% elif kisa_puan <= -2 %}
-                {% set kisa_durum = "Olumsuz" %}{% set kisa_class = "olumsuz" %}{% set kisa_emoji = "📉" %}
-                {% set kisa_hedef = (fiyat * 0.96) | round(2) %}
-                {% set kisa_alt = (fiyat * 0.93) | round(2) %}
-                {% set kisa_neden = "Asiri alim bolgesi, duzeltme bekleniyor" %}
-            {% else %}
-                {% set kisa_durum = "Nötr" %}{% set kisa_class = "notr" %}{% set kisa_emoji = "➡️" %}
-                {% set kisa_hedef = (fiyat * 1.01) | round(2) %}
-                {% set kisa_alt = (fiyat * 0.99) | round(2) %}
-                {% set kisa_neden = "Kararsiz seyir, net sinyal yok" %}
-            {% endif %}
-
+            {% if kisa_puan >= 2 %}{% set kisa_durum = "Olumlu" %}{% set kisa_class = "olumlu" %}{% set kisa_emoji = "📈" %}{% set kisa_hedef = (fiyat * 1.04) | round(2) %}{% set kisa_alt = (fiyat * 0.99) | round(2) %}{% set kisa_neden = "RSI ve MACD pozitif sinyal veriyor" %}
+            {% elif kisa_puan <= -2 %}{% set kisa_durum = "Olumsuz" %}{% set kisa_class = "olumsuz" %}{% set kisa_emoji = "📉" %}{% set kisa_hedef = (fiyat * 0.96) | round(2) %}{% set kisa_alt = (fiyat * 0.93) | round(2) %}{% set kisa_neden = "Asiri alim bolgesi, duzeltme bekleniyor" %}
+            {% else %}{% set kisa_durum = "Nötr" %}{% set kisa_class = "notr" %}{% set kisa_emoji = "➡️" %}{% set kisa_hedef = (fiyat * 1.01) | round(2) %}{% set kisa_alt = (fiyat * 0.99) | round(2) %}{% set kisa_neden = "Kararsiz seyir, net sinyal yok" %}{% endif %}
             {% set orta_puan = 0 %}
             {% if fiyat > ma50 %}{% set orta_puan = orta_puan + 2 %}{% else %}{% set orta_puan = orta_puan - 2 %}{% endif %}
             {% if fiyat > ma200 %}{% set orta_puan = orta_puan + 1 %}{% else %}{% set orta_puan = orta_puan - 1 %}{% endif %}
             {% if perf1ay > 5 %}{% set orta_puan = orta_puan + 1 %}{% elif perf1ay < -5 %}{% set orta_puan = orta_puan - 1 %}{% endif %}
-
-            {% if orta_puan >= 2 %}
-                {% set orta_durum = "Olumlu" %}{% set orta_class = "olumlu" %}{% set orta_emoji = "📈" %}
-                {% set orta_hedef = (fiyat * 1.10) | round(2) %}
-                {% set orta_alt = (fiyat * 1.02) | round(2) %}
-                {% set orta_neden = "Fiyat guclu MA trendlerinin uzerinde" %}
-            {% elif orta_puan <= -2 %}
-                {% set orta_durum = "Olumsuz" %}{% set orta_class = "olumsuz" %}{% set orta_emoji = "📉" %}
-                {% set orta_hedef = (fiyat * 0.90) | round(2) %}
-                {% set orta_alt = (fiyat * 0.85) | round(2) %}
-                {% set orta_neden = "MA trendleri altinda, baski devam edebilir" %}
-            {% else %}
-                {% set orta_durum = "Nötr" %}{% set orta_class = "notr" %}{% set orta_emoji = "➡️" %}
-                {% set orta_hedef = (fiyat * 1.05) | round(2) %}
-                {% set orta_alt = (fiyat * 0.95) | round(2) %}
-                {% set orta_neden = "Karma sinyaller, yatay seyir bekleniyor" %}
-            {% endif %}
-
+            {% if orta_puan >= 2 %}{% set orta_durum = "Olumlu" %}{% set orta_class = "olumlu" %}{% set orta_emoji = "📈" %}{% set orta_hedef = (fiyat * 1.10) | round(2) %}{% set orta_alt = (fiyat * 1.02) | round(2) %}{% set orta_neden = "Fiyat guclu MA trendlerinin uzerinde" %}
+            {% elif orta_puan <= -2 %}{% set orta_durum = "Olumsuz" %}{% set orta_class = "olumsuz" %}{% set orta_emoji = "📉" %}{% set orta_hedef = (fiyat * 0.90) | round(2) %}{% set orta_alt = (fiyat * 0.85) | round(2) %}{% set orta_neden = "MA trendleri altinda, baski devam edebilir" %}
+            {% else %}{% set orta_durum = "Nötr" %}{% set orta_class = "notr" %}{% set orta_emoji = "➡️" %}{% set orta_hedef = (fiyat * 1.05) | round(2) %}{% set orta_alt = (fiyat * 0.95) | round(2) %}{% set orta_neden = "Karma sinyaller, yatay seyir bekleniyor" %}{% endif %}
             {% set uzun_puan = 0 %}
             {% if fiyat > ma200 %}{% set uzun_puan = uzun_puan + 2 %}{% else %}{% set uzun_puan = uzun_puan - 1 %}{% endif %}
             {% if perf3ay > 10 %}{% set uzun_puan = uzun_puan + 2 %}{% elif perf3ay < -10 %}{% set uzun_puan = uzun_puan - 2 %}{% endif %}
             {% if temel and temel.roe and temel.roe > 15 %}{% set uzun_puan = uzun_puan + 1 %}{% endif %}
             {% if temel and temel.pe_orani and temel.pe_orani < 15 %}{% set uzun_puan = uzun_puan + 1 %}{% endif %}
-
-            {% if uzun_puan >= 2 %}
-                {% set uzun_durum = "Olumlu" %}{% set uzun_class = "olumlu" %}{% set uzun_emoji = "📈" %}
-                {% set uzun_hedef = (fiyat * 1.30) | round(2) %}
-                {% set uzun_alt = (fiyat * 1.10) | round(2) %}
-                {% set uzun_neden = "Guclu temel + teknik tablo" %}
-            {% elif uzun_puan <= -1 %}
-                {% set uzun_durum = "Olumsuz" %}{% set uzun_class = "olumsuz" %}{% set uzun_emoji = "📉" %}
-                {% set uzun_hedef = (fiyat * 0.80) | round(2) %}
-                {% set uzun_alt = (fiyat * 0.70) | round(2) %}
-                {% set uzun_neden = "Zayif momentum, riskler agir basiyor" %}
-            {% else %}
-                {% set uzun_durum = "Nötr" %}{% set uzun_class = "notr" %}{% set uzun_emoji = "➡️" %}
-                {% set uzun_hedef = (fiyat * 1.15) | round(2) %}
-                {% set uzun_alt = (fiyat * 0.90) | round(2) %}
-                {% set uzun_neden = "Orta duzey buyume potansiyeli" %}
-            {% endif %}
+            {% if uzun_puan >= 2 %}{% set uzun_durum = "Olumlu" %}{% set uzun_class = "olumlu" %}{% set uzun_emoji = "📈" %}{% set uzun_hedef = (fiyat * 1.30) | round(2) %}{% set uzun_alt = (fiyat * 1.10) | round(2) %}{% set uzun_neden = "Guclu temel + teknik tablo" %}
+            {% elif uzun_puan <= -1 %}{% set uzun_durum = "Olumsuz" %}{% set uzun_class = "olumsuz" %}{% set uzun_emoji = "📉" %}{% set uzun_hedef = (fiyat * 0.80) | round(2) %}{% set uzun_alt = (fiyat * 0.70) | round(2) %}{% set uzun_neden = "Zayif momentum, riskler agir basiyor" %}
+            {% else %}{% set uzun_durum = "Nötr" %}{% set uzun_class = "notr" %}{% set uzun_emoji = "➡️" %}{% set uzun_hedef = (fiyat * 1.15) | round(2) %}{% set uzun_alt = (fiyat * 0.90) | round(2) %}{% set uzun_neden = "Orta duzey buyume potansiyeli" %}{% endif %}
 
             <div class="tahmin-grid">
                 <div class="tahmin-kart {{ kisa_class }}">
@@ -285,15 +253,16 @@
                     <div class="tahmin-neden">{{ uzun_neden }}</div>
                 </div>
             </div>
-
             <div class="grafik-wrap">
                 <canvas id="tahminGrafik"></canvas>
             </div>
             <p class="uyari-kucuk">⚠️ Bu tahminler teknik göstergelere dayalı algoritmik hesaplamadır, kesinlik garantisi vermez.</p>
-
             <script>
             (function() {
                 const ctx = document.getElementById('tahminGrafik').getContext('2d');
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                const gridColor = isDark ? 'rgba(48,54,61,0.5)' : 'rgba(226,232,240,0.8)';
+                const tickColor = isDark ? '#8b949e' : '#64748b';
                 new Chart(ctx, {
                     type: 'bar',
                     data: {
@@ -301,29 +270,23 @@
                         datasets: [{
                             label: 'Hedef Fiyat (TL)',
                             data: [{{ fiyat }}, {{ kisa_hedef }}, {{ orta_hedef }}, {{ uzun_hedef }}],
-                            backgroundColor: [
-                                'rgba(26,60,110,0.4)',
-                                '{{ "rgba(26,127,75,0.4)" if kisa_class == "olumlu" else "rgba(192,57,43,0.4)" if kisa_class == "olumsuz" else "rgba(183,134,11,0.4)" }}',
-                                '{{ "rgba(26,127,75,0.4)" if orta_class == "olumlu" else "rgba(192,57,43,0.4)" if orta_class == "olumsuz" else "rgba(183,134,11,0.4)" }}',
-                                '{{ "rgba(26,127,75,0.4)" if uzun_class == "olumlu" else "rgba(192,57,43,0.4)" if uzun_class == "olumsuz" else "rgba(183,134,11,0.4)" }}',
-                            ],
-                            borderColor: [
-                                'rgba(26,60,110,1)',
-                                '{{ "rgba(26,127,75,1)" if kisa_class == "olumlu" else "rgba(192,57,43,1)" if kisa_class == "olumsuz" else "rgba(183,134,11,1)" }}',
-                                '{{ "rgba(26,127,75,1)" if orta_class == "olumlu" else "rgba(192,57,43,1)" if orta_class == "olumsuz" else "rgba(183,134,11,1)" }}',
-                                '{{ "rgba(26,127,75,1)" if uzun_class == "olumlu" else "rgba(192,57,43,1)" if uzun_class == "olumsuz" else "rgba(183,134,11,1)" }}',
-                            ],
-                            borderWidth: 2,
-                            borderRadius: 6,
+                            backgroundColor: ['rgba(88,166,255,0.4)',
+                                '{{ "rgba(63,185,80,0.4)" if kisa_class == "olumlu" else "rgba(248,81,73,0.4)" if kisa_class == "olumsuz" else "rgba(227,179,65,0.4)" }}',
+                                '{{ "rgba(63,185,80,0.4)" if orta_class == "olumlu" else "rgba(248,81,73,0.4)" if orta_class == "olumsuz" else "rgba(227,179,65,0.4)" }}',
+                                '{{ "rgba(63,185,80,0.4)" if uzun_class == "olumlu" else "rgba(248,81,73,0.4)" if uzun_class == "olumsuz" else "rgba(227,179,65,0.4)" }}'],
+                            borderColor: ['rgba(88,166,255,1)',
+                                '{{ "rgba(63,185,80,1)" if kisa_class == "olumlu" else "rgba(248,81,73,1)" if kisa_class == "olumsuz" else "rgba(227,179,65,1)" }}',
+                                '{{ "rgba(63,185,80,1)" if orta_class == "olumlu" else "rgba(248,81,73,1)" if orta_class == "olumsuz" else "rgba(227,179,65,1)" }}',
+                                '{{ "rgba(63,185,80,1)" if uzun_class == "olumlu" else "rgba(248,81,73,1)" if uzun_class == "olumsuz" else "rgba(227,179,65,1)" }}'],
+                            borderWidth: 2, borderRadius: 6,
                         }]
                     },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
+                        responsive: true, maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: {
-                            y: { grid: { color: 'rgba(226,232,240,0.8)' }, ticks: { color: '#64748b', font: { family: 'JetBrains Mono' } } },
-                            x: { grid: { display: false }, ticks: { color: '#64748b' } }
+                            y: { grid: { color: gridColor }, ticks: { color: tickColor, font: { family: 'JetBrains Mono' } } },
+                            x: { grid: { display: false }, ticks: { color: tickColor } }
                         }
                     }
                 });
@@ -400,18 +363,18 @@
         <div class="card-body open">
             <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
                 <span style="font-size:0.85rem;color:var(--muted)">Genel Duygu:</span>
-                {% if sentiment == 'Olumlu' %}<span style="padding:0.25rem 0.75rem;border-radius:20px;background:rgba(26,127,75,0.1);color:var(--green);border:1px solid rgba(26,127,75,0.25);font-size:0.78rem;font-weight:600">✅ Olumlu</span>
-                {% elif sentiment == 'Olumsuz' %}<span style="padding:0.25rem 0.75rem;border-radius:20px;background:rgba(192,57,43,0.1);color:var(--red);border:1px solid rgba(192,57,43,0.25);font-size:0.78rem;font-weight:600">⚠️ Olumsuz</span>
-                {% else %}<span style="padding:0.25rem 0.75rem;border-radius:20px;background:rgba(100,116,139,0.1);color:var(--muted);border:1px solid rgba(100,116,139,0.25);font-size:0.78rem;font-weight:600">➖ Notr</span>{% endif %}
+                {% if sentiment == 'Olumlu' %}<span style="padding:0.25rem 0.75rem;border-radius:20px;background:rgba(63,185,80,0.15);color:var(--green);border:1px solid rgba(63,185,80,0.3);font-size:0.78rem;font-weight:600">✅ Olumlu</span>
+                {% elif sentiment == 'Olumsuz' %}<span style="padding:0.25rem 0.75rem;border-radius:20px;background:rgba(248,81,73,0.15);color:var(--red);border:1px solid rgba(248,81,73,0.3);font-size:0.78rem;font-weight:600">⚠️ Olumsuz</span>
+                {% else %}<span style="padding:0.25rem 0.75rem;border-radius:20px;background:rgba(139,148,158,0.15);color:var(--muted);border:1px solid rgba(139,148,158,0.3);font-size:0.78rem;font-weight:600">➖ Notr</span>{% endif %}
             </div>
             {% if haberler %}
             <div class="news-list">
                 {% for haber in haberler %}
                 <div class="news-item">
                     <div style="display:flex;align-items:flex-start;gap:0.6rem;margin-bottom:0.3rem">
-                        {% if haber.sentiment_bireysel == 'Olumlu' %}<span style="font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:999px;background:rgba(26,127,75,0.1);color:var(--green);border:1px solid rgba(26,127,75,0.2);white-space:nowrap;flex-shrink:0;margin-top:2px">✅ Olumlu</span>
-                        {% elif haber.sentiment_bireysel == 'Olumsuz' %}<span style="font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:999px;background:rgba(192,57,43,0.1);color:var(--red);border:1px solid rgba(192,57,43,0.2);white-space:nowrap;flex-shrink:0;margin-top:2px">⚠️ Olumsuz</span>
-                        {% else %}<span style="font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:999px;background:rgba(100,116,139,0.1);color:var(--muted);border:1px solid rgba(100,116,139,0.2);white-space:nowrap;flex-shrink:0;margin-top:2px">➖ Notr</span>{% endif %}
+                        {% if haber.sentiment_bireysel == 'Olumlu' %}<span style="font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:999px;background:rgba(63,185,80,0.15);color:var(--green);border:1px solid rgba(63,185,80,0.3);white-space:nowrap;flex-shrink:0;margin-top:2px">✅ Olumlu</span>
+                        {% elif haber.sentiment_bireysel == 'Olumsuz' %}<span style="font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:999px;background:rgba(248,81,73,0.15);color:var(--red);border:1px solid rgba(248,81,73,0.3);white-space:nowrap;flex-shrink:0;margin-top:2px">⚠️ Olumsuz</span>
+                        {% else %}<span style="font-size:0.72rem;padding:0.15rem 0.5rem;border-radius:999px;background:rgba(139,148,158,0.15);color:var(--muted);border:1px solid rgba(139,148,158,0.3);white-space:nowrap;flex-shrink:0;margin-top:2px">➖ Notr</span>{% endif %}
                         <div class="news-title" style="margin:0">{% if haber.url %}<a href="{{ haber.url }}" target="_blank">{{ haber.baslik_tr or haber.baslik or 'Baslik yok' }}</a>{% else %}{{ haber.baslik_tr or haber.baslik or 'Baslik yok' }}{% endif %}</div>
                     </div>
                     <div class="news-meta"><span>📌 {{ haber.kaynak or 'Bilinmiyor' }}</span>{% if haber.tarih %}<span>📅 {{ haber.tarih }}</span>{% endif %}</div>
@@ -470,7 +433,6 @@
     </div>
 
     </div>
-
     <div class="footer">
         ⚠️ Bu analiz yatirim tavsiyesi degildir. Veri: KAP · Google Haberler · Yahoo Finance · Claude · {{ analiz_tarihi }}
         <div class="made-by">Made by <span>Ahmet İlhan Arıkan</span></div>
@@ -496,7 +458,22 @@ function formatAIReport() {
     html = '<p>' + html + '</p>';
     report.innerHTML = html;
 }
-formatAIReport();
+function temaToggle() {
+    const html = document.documentElement;
+    const yeni = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    html.setAttribute('data-theme', yeni);
+    localStorage.setItem('tema', yeni);
+    document.getElementById('temaBtn').textContent = yeni === 'dark' ? '☀️' : '🌙';
+}
+(function() {
+    const kayitli = localStorage.getItem('tema') || 'light';
+    document.documentElement.setAttribute('data-theme', kayitli);
+    document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('temaBtn');
+        if (btn) btn.textContent = kayitli === 'dark' ? '☀️' : '🌙';
+        formatAIReport();
+    });
+})();
 </script>
 </body>
 </html>
