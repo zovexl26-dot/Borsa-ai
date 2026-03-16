@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,26 +7,38 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        :root {
+        [data-theme="light"] {
             --bg: #f4f6f9; --card: #ffffff; --border: #e2e8f0;
             --accent: #1a3c6e; --accent2: #c9a84c;
             --green: #1a7f4b; --red: #c0392b;
             --text: #1a202c; --muted: #64748b;
             --surface: #f1f4f8; --nav-bg: #dce3ed;
             --shadow: 0 2px 16px rgba(26,60,110,0.08);
+            --toggle-bg: #dce3ed; --toggle-border: #b8c5d6;
+        }
+        [data-theme="dark"] {
+            --bg: #0d1117; --card: #161b22; --border: #30363d;
+            --accent: #58a6ff; --accent2: #e3b341;
+            --green: #3fb950; --red: #f85149;
+            --text: #e6edf3; --muted: #8b949e;
+            --surface: #21262d; --nav-bg: #21262d;
+            --shadow: 0 2px 16px rgba(0,0,0,0.3);
+            --toggle-bg: #21262d; --toggle-border: #30363d;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; padding: 1.5rem 1rem 3rem; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; padding: 1.5rem 1rem 3rem; transition: background 0.2s, color 0.2s; }
+        .tema-btn { position: fixed; top: 1rem; right: 1rem; background: var(--toggle-bg); border: 1.5px solid var(--toggle-border); border-radius: 50%; width: 42px; height: 42px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 999; box-shadow: var(--shadow); transition: all 0.2s; }
+        .tema-btn:hover { transform: scale(1.1); }
         .page-wrap { max-width: 900px; margin: 0 auto; }
         .top-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
-        .back-btn { background: var(--nav-bg); border: 1.5px solid #b8c5d6; color: var(--accent); border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; text-decoration: none; font-weight: 600; }
-        .back-btn:hover { background: #cdd5e0; }
+        .back-btn { background: var(--nav-bg); border: 1.5px solid var(--toggle-border); color: var(--accent); border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; text-decoration: none; font-weight: 600; }
+        .back-btn:hover { opacity: 0.8; }
         .page-title h1 { font-size: 1.6rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
         .page-title .sub { color: var(--muted); font-size: 0.85rem; margin-top: 0.2rem; }
         .ozet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
         .ozet-kart { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; text-align: center; box-shadow: var(--shadow); }
         .ozet-kart .label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 0.5rem; }
-        .ozet-kart .deger { font-size: 1.4rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+        .ozet-kart .deger { font-size: 1.4rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: var(--text); }
         .ekle-kart { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow); }
         .ekle-kart h3 { font-size: 0.95rem; font-weight: 700; color: var(--accent); margin-bottom: 1rem; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.75rem; align-items: end; }
@@ -36,21 +48,23 @@
         .ekle-btn { background: linear-gradient(135deg, var(--accent), #2d5fa6); color: #fff; border: none; border-radius: 8px; padding: 0.65rem 1.25rem; font-size: 0.9rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
         .ekle-btn:hover { opacity: 0.9; }
         .tablo-kart { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); }
-        .tablo-baslik { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; font-weight: 700; color: var(--accent); display: flex; justify-content: space-between; align-items: center; }
-        .yenile-btn { background: var(--nav-bg); border: 1px solid #b8c5d6; color: var(--accent); border-radius: 6px; padding: 0.35rem 0.85rem; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
+        .tablo-baslik { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; font-weight: 700; color: var(--accent); display: flex; justify-content: space-between; align-items: center; background: var(--surface); }
+        .yenile-btn { background: var(--nav-bg); border: 1px solid var(--toggle-border); color: var(--accent); border-radius: 6px; padding: 0.35rem 0.85rem; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th { text-align: left; color: var(--muted); font-weight: 600; padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.73rem; text-transform: uppercase; background: var(--surface); }
-        td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(226,232,240,0.6); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+        td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(226,232,240,0.5); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+        [data-theme="dark"] td { border-bottom-color: rgba(48,54,61,0.5); }
         tr:last-child td { border-bottom: none; }
-        tr:hover td { background: #f8fafc; }
+        tr:hover td { background: rgba(241,244,248,0.5); }
+        [data-theme="dark"] tr:hover td { background: rgba(33,38,45,0.5); }
         .sembol-cell { font-weight: 700; color: var(--accent); }
         .pos { color: var(--green); font-weight: 700; }
         .neg { color: var(--red); font-weight: 700; }
-        .sil-btn { background: #fff0f0; border: 1px solid #fecaca; color: var(--red); border-radius: 6px; padding: 0.25rem 0.6rem; font-size: 0.75rem; cursor: pointer; font-weight: 600; }
-        .sil-btn:hover { background: #fee2e2; }
+        .sil-btn { background: rgba(192,57,43,0.1); border: 1px solid rgba(192,57,43,0.3); color: var(--red); border-radius: 6px; padding: 0.25rem 0.6rem; font-size: 0.75rem; cursor: pointer; font-weight: 600; }
+        .sil-btn:hover { background: rgba(192,57,43,0.2); }
         .bos-mesaj { text-align: center; padding: 3rem; color: var(--muted); }
         .bos-mesaj .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
-        .hata-msg { background: #fff5f5; border: 1px solid #fecaca; border-radius: 8px; padding: 0.6rem 1rem; color: var(--red); font-size: 0.82rem; margin-top: 0.5rem; display: none; }
+        .hata-msg { background: rgba(192,57,43,0.1); border: 1px solid rgba(192,57,43,0.3); border-radius: 8px; padding: 0.6rem 1rem; color: var(--red); font-size: 0.82rem; margin-top: 0.5rem; display: none; }
         .yukleniyor { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.9rem; display: none; }
         .footer { text-align: center; margin-top: 2rem; color: var(--muted); font-size: 0.75rem; line-height: 2; }
         .made-by { margin-top: 0.5rem; font-size: 0.95rem; color: var(--accent); font-weight: 700; }
@@ -60,6 +74,7 @@
     </style>
 </head>
 <body>
+<button class="tema-btn" onclick="temaToggle()" id="temaBtn">🌙</button>
 <div class="page-wrap">
     <div class="top-bar">
         <a href="/" class="back-btn">← Ana Sayfa</a>
@@ -70,35 +85,17 @@
     </div>
 
     <div class="ozet-grid">
-        <div class="ozet-kart">
-            <div class="label">Toplam Maliyet</div>
-            <div class="deger" id="toplamMaliyet">—</div>
-        </div>
-        <div class="ozet-kart">
-            <div class="label">Güncel Değer</div>
-            <div class="deger" id="guncelDeger">—</div>
-        </div>
-        <div class="ozet-kart">
-            <div class="label">Toplam Kar/Zarar</div>
-            <div class="deger" id="toplamKarZarar">—</div>
-        </div>
+        <div class="ozet-kart"><div class="label">Toplam Maliyet</div><div class="deger" id="toplamMaliyet">—</div></div>
+        <div class="ozet-kart"><div class="label">Güncel Değer</div><div class="deger" id="guncelDeger">—</div></div>
+        <div class="ozet-kart"><div class="label">Toplam Kar/Zarar</div><div class="deger" id="toplamKarZarar">—</div></div>
     </div>
 
     <div class="ekle-kart">
         <h3>➕ Hisse Ekle</h3>
         <div class="form-row">
-            <div class="form-group">
-                <label>Sembol</label>
-                <input type="text" id="sembolInput" placeholder="THYAO" maxlength="10" style="text-transform:uppercase">
-            </div>
-            <div class="form-group">
-                <label>Adet</label>
-                <input type="number" id="adetInput" placeholder="100" min="1">
-            </div>
-            <div class="form-group">
-                <label>Alış Fiyatı (TL)</label>
-                <input type="number" id="alisFiyatiInput" placeholder="150.50" step="0.01">
-            </div>
+            <div class="form-group"><label>Sembol</label><input type="text" id="sembolInput" placeholder="THYAO" maxlength="10" style="text-transform:uppercase"></div>
+            <div class="form-group"><label>Adet</label><input type="number" id="adetInput" placeholder="100" min="1"></div>
+            <div class="form-group"><label>Alış Fiyatı (TL)</label><input type="number" id="alisFiyatiInput" placeholder="150.50" step="0.01"></div>
             <button class="ekle-btn" onclick="hisseEkle()">Ekle</button>
         </div>
         <div class="hata-msg" id="hataMesaji"></div>
@@ -111,11 +108,7 @@
         </div>
         <div class="yukleniyor" id="yukleniyor">⏳ Fiyatlar güncelleniyor...</div>
         <div id="portfoyTablosu">
-            <div class="bos-mesaj">
-                <div class="icon">💼</div>
-                <p>Henüz hisse eklenmedi.</p>
-                <p style="font-size:0.82rem;margin-top:0.4rem">Yukarıdan hisse ekleyerek başlayabilirsin.</p>
-            </div>
+            <div class="bos-mesaj"><div class="icon">💼</div><p>Henüz hisse eklenmedi.</p><p style="font-size:0.82rem;margin-top:0.4rem">Yukarıdan hisse ekleyerek başlayabilirsin.</p></div>
         </div>
     </div>
 
@@ -129,9 +122,7 @@
 <script>
 let portfoy = JSON.parse(localStorage.getItem('portfoy') || '[]');
 
-function portfoyKaydet() {
-    localStorage.setItem('portfoy', JSON.stringify(portfoy));
-}
+function portfoyKaydet() { localStorage.setItem('portfoy', JSON.stringify(portfoy)); }
 
 function formatTL(sayi) {
     if (sayi === null || sayi === undefined || isNaN(sayi)) return '—';
@@ -143,21 +134,17 @@ function hisseEkle() {
     const adet = parseFloat(document.getElementById('adetInput').value);
     const alisFiyati = parseFloat(document.getElementById('alisFiyatiInput').value);
     const hata = document.getElementById('hataMesaji');
-
     if (!sembol) { hata.textContent = 'Sembol girin!'; hata.style.display = 'block'; return; }
     if (!adet || adet <= 0) { hata.textContent = 'Geçerli adet girin!'; hata.style.display = 'block'; return; }
     if (!alisFiyati || alisFiyati <= 0) { hata.textContent = 'Geçerli alış fiyatı girin!'; hata.style.display = 'block'; return; }
-
     hata.style.display = 'none';
-
     const mevcutIndex = portfoy.findIndex(h => h.sembol === sembol);
     if (mevcutIndex >= 0) {
+        portfoy[mevcutIndex].alisFiyati = ((portfoy[mevcutIndex].alisFiyati * portfoy[mevcutIndex].adet) + (alisFiyati * adet)) / (portfoy[mevcutIndex].adet + adet);
         portfoy[mevcutIndex].adet += adet;
-        portfoy[mevcutIndex].alisFiyati = ((portfoy[mevcutIndex].alisFiyati * (portfoy[mevcutIndex].adet - adet)) + (alisFiyati * adet)) / portfoy[mevcutIndex].adet;
     } else {
         portfoy.push({ sembol, adet, alisFiyati, guncelFiyat: null });
     }
-
     portfoyKaydet();
     document.getElementById('sembolInput').value = '';
     document.getElementById('adetInput').value = '';
@@ -173,91 +160,70 @@ function hisseSil(sembol) {
 
 function tabloGuncelle() {
     const kapsayici = document.getElementById('portfoyTablosu');
-
     if (portfoy.length === 0) {
-        kapsayici.innerHTML = '<div class="bos-mesaj"><div class="icon">💼</div><p>Henüz hisse eklenmedi.</p><p style="font-size:0.82rem;margin-top:0.4rem">Yukarıdan hisse ekleyerek başlayabilirsin.</p></div>';
+        kapsayici.innerHTML = '<div class="bos-mesaj"><div class="icon">💼</div><p>Henüz hisse eklenmedi.</p></div>';
         document.getElementById('toplamMaliyet').textContent = '—';
         document.getElementById('guncelDeger').textContent = '—';
         document.getElementById('toplamKarZarar').textContent = '—';
         return;
     }
-
-    let toplamMaliyet = 0;
-    let toplamGuncel = 0;
-
+    let toplamMaliyet = 0, toplamGuncel = 0;
     let html = '<table><thead><tr><th>Sembol</th><th>Adet</th><th>Alış</th><th>Güncel</th><th>Maliyet</th><th>Değer</th><th>Kar/Zarar</th><th>%</th><th></th></tr></thead><tbody>';
-
     portfoy.forEach(h => {
         const maliyet = h.adet * h.alisFiyati;
         const guncelDeger = h.guncelFiyat ? h.adet * h.guncelFiyat : null;
         const karZarar = guncelDeger ? guncelDeger - maliyet : null;
         const yuzde = karZarar ? (karZarar / maliyet) * 100 : null;
-
         toplamMaliyet += maliyet;
         if (guncelDeger) toplamGuncel += guncelDeger;
-
         const karClass = karZarar > 0 ? 'pos' : karZarar < 0 ? 'neg' : '';
-
-        html += `<tr>
-            <td class="sembol-cell">${h.sembol}</td>
-            <td>${h.adet}</td>
-            <td>${h.alisFiyati.toFixed(2)} ₺</td>
-            <td>${h.guncelFiyat ? h.guncelFiyat.toFixed(2) + ' ₺' : '—'}</td>
-            <td>${formatTL(maliyet)}</td>
-            <td>${guncelDeger ? formatTL(guncelDeger) : '—'}</td>
-            <td class="${karClass}">${karZarar ? (karZarar > 0 ? '+' : '') + formatTL(karZarar) : '—'}</td>
-            <td class="${karClass}">${yuzde ? (yuzde > 0 ? '+' : '') + yuzde.toFixed(2) + '%' : '—'}</td>
-            <td><button class="sil-btn" onclick="hisseSil('${h.sembol}')">Sil</button></td>
-        </tr>`;
+        html += `<tr><td class="sembol-cell">${h.sembol}</td><td>${h.adet}</td><td>${h.alisFiyati.toFixed(2)} ₺</td><td>${h.guncelFiyat ? h.guncelFiyat.toFixed(2) + ' ₺' : '—'}</td><td>${formatTL(maliyet)}</td><td>${guncelDeger ? formatTL(guncelDeger) : '—'}</td><td class="${karClass}">${karZarar ? (karZarar > 0 ? '+' : '') + formatTL(karZarar) : '—'}</td><td class="${karClass}">${yuzde ? (yuzde > 0 ? '+' : '') + yuzde.toFixed(2) + '%' : '—'}</td><td><button class="sil-btn" onclick="hisseSil('${h.sembol}')">Sil</button></td></tr>`;
     });
-
     html += '</tbody></table>';
     kapsayici.innerHTML = html;
-
     document.getElementById('toplamMaliyet').textContent = formatTL(toplamMaliyet);
-
     if (toplamGuncel > 0) {
         document.getElementById('guncelDeger').textContent = formatTL(toplamGuncel);
-        const toplamKarZarar = toplamGuncel - toplamMaliyet;
+        const toplamKZ = toplamGuncel - toplamMaliyet;
         const el = document.getElementById('toplamKarZarar');
-        el.textContent = (toplamKarZarar > 0 ? '+' : '') + formatTL(toplamKarZarar);
-        el.className = 'deger ' + (toplamKarZarar > 0 ? 'pos' : toplamKarZarar < 0 ? 'neg' : '');
-    } else {
-        document.getElementById('guncelDeger').textContent = '—';
-        document.getElementById('toplamKarZarar').textContent = '—';
+        el.textContent = (toplamKZ > 0 ? '+' : '') + formatTL(toplamKZ);
+        el.className = 'deger ' + (toplamKZ > 0 ? 'pos' : toplamKZ < 0 ? 'neg' : '');
     }
 }
 
 async function portfoyuYenile() {
     if (portfoy.length === 0) { tabloGuncelle(); return; }
-
     document.getElementById('yukleniyor').style.display = 'block';
     document.getElementById('portfoyTablosu').style.display = 'none';
-
     const semboller = portfoy.map(h => h.sembol).join(',');
-
     try {
         const response = await fetch(`/api/fiyatlar?semboller=${semboller}`);
         const data = await response.json();
-
-        portfoy.forEach(h => {
-            if (data[h.sembol]) {
-                h.guncelFiyat = data[h.sembol];
-            }
-        });
+        portfoy.forEach(h => { if (data[h.sembol]) h.guncelFiyat = data[h.sembol]; });
         portfoyKaydet();
-    } catch (e) {
-        console.error('Fiyat güncelleme hatası:', e);
-    }
-
+    } catch (e) { console.error('Fiyat güncelleme hatası:', e); }
     document.getElementById('yukleniyor').style.display = 'none';
     document.getElementById('portfoyTablosu').style.display = 'block';
     tabloGuncelle();
 }
 
-// Sayfa yüklenince
-tabloGuncelle();
-if (portfoy.length > 0) portfoyuYenile();
+function temaToggle() {
+    const html = document.documentElement;
+    const yeni = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    html.setAttribute('data-theme', yeni);
+    localStorage.setItem('tema', yeni);
+    document.getElementById('temaBtn').textContent = yeni === 'dark' ? '☀️' : '🌙';
+}
+(function() {
+    const kayitli = localStorage.getItem('tema') || 'light';
+    document.documentElement.setAttribute('data-theme', kayitli);
+    document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('temaBtn');
+        if (btn) btn.textContent = kayitli === 'dark' ? '☀️' : '🌙';
+        tabloGuncelle();
+        if (portfoy.length > 0) portfoyuYenile();
+    });
+})();
 </script>
 </body>
 </html>

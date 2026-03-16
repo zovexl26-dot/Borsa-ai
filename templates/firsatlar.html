@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,53 +7,70 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        :root {
+        [data-theme="light"] {
+            --bg: #f4f6f9; --card: #ffffff; --border: #e2e8f0;
+            --accent: #1a3c6e; --accent2: #c9a84c;
+            --green: #1a7f4b; --red: #c0392b;
+            --text: #1a202c; --muted: #64748b;
+            --surface: #f1f4f8; --nav-bg: #dce3ed;
+            --shadow: 0 2px 16px rgba(26,60,110,0.08);
+            --toggle-bg: #dce3ed; --toggle-border: #b8c5d6;
+        }
+        [data-theme="dark"] {
             --bg: #0d1117; --card: #161b22; --border: #30363d;
-            --accent: #58a6ff; --green: #3fb950; --red: #f85149;
-            --yellow: #e3b341; --text: #e6edf3; --muted: #8b949e; --surface: #21262d;
+            --accent: #58a6ff; --accent2: #e3b341;
+            --green: #3fb950; --red: #f85149;
+            --text: #e6edf3; --muted: #8b949e;
+            --surface: #21262d; --nav-bg: #21262d;
+            --shadow: 0 2px 16px rgba(0,0,0,0.3);
+            --toggle-bg: #21262d; --toggle-border: #30363d;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; padding: 1.5rem 1rem 3rem; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; padding: 1.5rem 1rem 3rem; transition: background 0.2s, color 0.2s; }
+        .tema-btn { position: fixed; top: 1rem; right: 1rem; background: var(--toggle-bg); border: 1.5px solid var(--toggle-border); border-radius: 50%; width: 42px; height: 42px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 999; box-shadow: var(--shadow); transition: all 0.2s; }
+        .tema-btn:hover { transform: scale(1.1); }
         .page-wrap { max-width: 1000px; margin: 0 auto; }
         .top-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
-        .back-btn { background: var(--surface); border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; text-decoration: none; }
-        .back-btn:hover { color: var(--text); }
+        .back-btn { background: var(--nav-bg); border: 1.5px solid var(--toggle-border); color: var(--accent); border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; text-decoration: none; font-weight: 600; }
+        .back-btn:hover { opacity: 0.8; }
         .page-title h1 { font-size: 1.6rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
         .page-title .sub { color: var(--muted); font-size: 0.85rem; margin-top: 0.2rem; }
-        .refresh-btn { background: linear-gradient(135deg, var(--accent) 0%, #a371f7 100%); color: #fff; border: none; border-radius: 8px; padding: 0.55rem 1.2rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-decoration: none; margin-left: auto; }
-        .bos-mesaj { text-align: center; padding: 4rem 2rem; color: var(--muted); }
-        .bos-mesaj .icon { font-size: 3rem; margin-bottom: 1rem; }
-        .firsat-grid { display: grid; gap: 1rem; }
-        .firsat-kart { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; transition: border-color 0.2s; }
+        .refresh-btn { background: linear-gradient(135deg, var(--accent) 0%, #2d5fa6 100%); color: #fff; border: none; border-radius: 8px; padding: 0.55rem 1.2rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-decoration: none; margin-left: auto; }
+        .uyari { background: rgba(183,134,11,0.1); border: 1px solid rgba(183,134,11,0.3); border-radius: 10px; padding: 0.75rem 1rem; color: #b7860b; font-size: 0.8rem; margin-bottom: 1.5rem; }
+        [data-theme="dark"] .uyari { background: rgba(227,179,65,0.1); border-color: rgba(227,179,65,0.3); color: #e3b341; }
+        .firsat-grid { display: flex; flex-direction: column; gap: 1rem; }
+        .firsat-kart { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; box-shadow: var(--shadow); transition: border-color 0.2s; }
         .firsat-kart:hover { border-color: var(--accent); }
         .firsat-sira { font-size: 1.5rem; font-weight: 800; color: var(--muted); font-family: 'JetBrains Mono', monospace; min-width: 2rem; }
         .firsat-sira.gold { color: #ffd700; }
-        .firsat-sira.silver { color: #c0c0c0; }
+        .firsat-sira.silver { color: #a0aec0; }
         .firsat-sira.bronze { color: #cd7f32; }
         .firsat-sembol { min-width: 120px; }
         .firsat-sembol .sembol { font-size: 1.1rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
         .firsat-sembol .isim { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
-        .firsat-fiyat { min-width: 100px; }
-        .firsat-fiyat .fiyat { font-size: 1rem; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+        .firsat-fiyat .fiyat { font-size: 1rem; font-weight: 600; font-family: 'JetBrains Mono', monospace; color: var(--text); }
         .firsat-fiyat .degisim { font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; margin-top: 0.1rem; }
         .firsat-metrikler { display: flex; gap: 1rem; flex-wrap: wrap; flex: 1; }
-        .metrik { background: var(--surface); border-radius: 8px; padding: 0.4rem 0.75rem; text-align: center; min-width: 70px; }
-        .metrik-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+        .metrik { background: var(--surface); border-radius: 8px; padding: 0.4rem 0.75rem; text-align: center; min-width: 70px; border: 1px solid var(--border); }
+        .metrik-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
         .metrik-val { font-size: 0.9rem; font-weight: 600; font-family: 'JetBrains Mono', monospace; margin-top: 0.1rem; }
         .firsat-nedenler { flex: 1; min-width: 200px; }
         .neden-item { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.4rem; }
         .neden-item::before { content: "✓"; color: var(--green); font-weight: 700; }
-        .puan-badge { background: linear-gradient(135deg, var(--accent), #a371f7); border-radius: 10px; padding: 0.5rem 0.9rem; text-align: center; min-width: 70px; }
+        .puan-badge { background: linear-gradient(135deg, var(--accent), #2d5fa6); border-radius: 10px; padding: 0.5rem 0.9rem; text-align: center; min-width: 70px; }
         .puan-sayi { font-size: 1.3rem; font-weight: 800; color: #fff; font-family: 'JetBrains Mono', monospace; }
-        .puan-label { font-size: 0.6rem; color: rgba(255,255,255,0.7); text-transform: uppercase; }
+        .puan-label { font-size: 0.6rem; color: rgba(255,255,255,0.8); text-transform: uppercase; }
         .analiz-btn { background: var(--surface); border: 1px solid var(--border); color: var(--accent); border-radius: 8px; padding: 0.4rem 0.85rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; text-decoration: none; white-space: nowrap; }
-        .analiz-btn:hover { background: rgba(88,166,255,0.1); }
+        .analiz-btn:hover { border-color: var(--accent); }
         .pos { color: var(--green); } .neg { color: var(--red); } .neu { color: var(--text); }
-        .uyari { background: rgba(227,179,65,0.1); border: 1px solid rgba(227,179,65,0.3); border-radius: 10px; padding: 0.75rem 1rem; color: var(--yellow); font-size: 0.8rem; margin-bottom: 1.5rem; }
+        .bos-mesaj { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+        .bos-mesaj .icon { font-size: 3rem; margin-bottom: 1rem; }
+        .footer { text-align: center; margin-top: 2rem; color: var(--muted); font-size: 0.75rem; }
         @media (max-width: 600px) { .firsat-kart { flex-direction: column; align-items: flex-start; } }
     </style>
 </head>
 <body>
+<button class="tema-btn" onclick="temaToggle()" id="temaBtn">🌙</button>
 <div class="page-wrap">
     <div class="top-bar">
         <a href="/" class="back-btn">← Ana Sayfa</a>
@@ -64,26 +81,20 @@
         <a href="/firsatlar" class="refresh-btn">🔄 Yenile</a>
     </div>
 
-    <div class="uyari">
-        ⚠️ Bu liste yatırım tavsiyesi değildir. Teknik göstergelere göre otomatik hesaplanmıştır.
-    </div>
+    <div class="uyari">⚠️ Bu liste yatırım tavsiyesi değildir. Teknik göstergelere göre otomatik hesaplanmıştır.</div>
 
     {% if firsatlar %}
     <div class="firsat-grid">
         {% for f in firsatlar %}
         <div class="firsat-kart">
-            <div class="firsat-sira {{ 'gold' if loop.index == 1 else 'silver' if loop.index == 2 else 'bronze' if loop.index == 3 else '' }}">
-                #{{ loop.index }}
-            </div>
+            <div class="firsat-sira {{ 'gold' if loop.index == 1 else 'silver' if loop.index == 2 else 'bronze' if loop.index == 3 else '' }}">#{{ loop.index }}</div>
             <div class="firsat-sembol">
                 <div class="sembol">{{ f.sembol }}</div>
                 <div class="isim">{{ f.sirket_adi[:25] }}</div>
             </div>
             <div class="firsat-fiyat">
                 <div class="fiyat">{{ f.fiyat }} TL</div>
-                <div class="degisim {{ 'pos' if f.degisim and f.degisim > 0 else 'neg' if f.degisim and f.degisim < 0 else 'neu' }}">
-                    {{ '+' if f.degisim and f.degisim > 0 else '' }}{{ f.degisim }}%
-                </div>
+                <div class="degisim {{ 'pos' if f.degisim and f.degisim > 0 else 'neg' if f.degisim and f.degisim < 0 else 'neu' }}">{{ '+' if f.degisim and f.degisim > 0 else '' }}{{ f.degisim }}%</div>
             </div>
             <div class="firsat-metrikler">
                 <div class="metrik">
@@ -96,15 +107,11 @@
                 </div>
                 <div class="metrik">
                     <div class="metrik-label">MACD</div>
-                    <div class="metrik-val {{ 'pos' if f.macd_histogram and f.macd_histogram > 0 else 'neg' if f.macd_histogram and f.macd_histogram < 0 else 'neu' }}">
-                        {{ '▲' if f.macd_histogram and f.macd_histogram > 0 else '▼' if f.macd_histogram and f.macd_histogram < 0 else '—' }}
-                    </div>
+                    <div class="metrik-val {{ 'pos' if f.macd_histogram and f.macd_histogram > 0 else 'neg' if f.macd_histogram and f.macd_histogram < 0 else 'neu' }}">{{ '▲' if f.macd_histogram and f.macd_histogram > 0 else '▼' if f.macd_histogram and f.macd_histogram < 0 else '—' }}</div>
                 </div>
             </div>
             <div class="firsat-nedenler">
-                {% for neden in f.nedenler %}
-                <div class="neden-item">{{ neden }}</div>
-                {% endfor %}
+                {% for neden in f.nedenler %}<div class="neden-item">{{ neden }}</div>{% endfor %}
             </div>
             <div class="puan-badge">
                 <div class="puan-sayi">{{ f.puan }}</div>
@@ -121,15 +128,27 @@
     <div class="bos-mesaj">
         <div class="icon">🔍</div>
         <p>Bugün kriterlere uyan fırsat hissesi bulunamadı.</p>
-        <p style="margin-top:0.5rem;font-size:0.85rem">Piyasa koşulları değiştiğinde tekrar kontrol edin.</p>
     </div>
     {% endif %}
 
-    <div style="margin-top:2rem;text-align:center">
-        <p style="color:var(--muted);font-size:0.75rem">
-            ⚠️ Yatırım tavsiyesi değildir. · <a href="/ozet" style="color:var(--accent)">Piyasa Özeti</a> · <a href="/karsilastir" style="color:var(--accent)">Hisse Karşılaştır</a>
-        </p>
-    </div>
+    <div class="footer">⚠️ Yatırım tavsiyesi değildir · <a href="/ozet" style="color:var(--accent)">Piyasa Özeti</a> · <a href="/karsilastir" style="color:var(--accent)">Karşılaştır</a></div>
 </div>
+<script>
+function temaToggle() {
+    const html = document.documentElement;
+    const yeni = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    html.setAttribute('data-theme', yeni);
+    localStorage.setItem('tema', yeni);
+    document.getElementById('temaBtn').textContent = yeni === 'dark' ? '☀️' : '🌙';
+}
+(function() {
+    const kayitli = localStorage.getItem('tema') || 'light';
+    document.documentElement.setAttribute('data-theme', kayitli);
+    document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('temaBtn');
+        if (btn) btn.textContent = kayitli === 'dark' ? '☀️' : '🌙';
+    });
+})();
+</script>
 </body>
 </html>
