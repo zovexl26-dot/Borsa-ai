@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Piyasa Haberleri - Borsa AI</title>
+    <title>Günlük Piyasa Haberleri - Borsa AI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -36,18 +36,21 @@
         .page-title h1 { font-size: 1.6rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
         .page-title .sub { color: var(--muted); font-size: 0.85rem; margin-top: 0.2rem; }
         .refresh-btn { background: linear-gradient(135deg, var(--accent) 0%, #2d5fa6 100%); color: #fff; border: none; border-radius: 8px; padding: 0.55rem 1.2rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-decoration: none; margin-left: auto; }
-        .filtre-bar { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
-        .filtre-btn { background: var(--surface); border: 1.5px solid var(--border); border-radius: 20px; padding: 0.35rem 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; color: var(--muted); transition: all 0.15s; }
-        .filtre-btn.aktif, .filtre-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
-        .ozet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        .ozet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.25rem; }
         .ozet-kart { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center; box-shadow: var(--shadow); }
         .ozet-kart .sayi { font-size: 1.8rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
         .ozet-kart .label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-top: 0.25rem; }
+        .filtre-bar { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap; align-items: center; }
+        .filtre-btn { background: var(--surface); border: 1.5px solid var(--border); border-radius: 20px; padding: 0.35rem 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+        .filtre-btn.aktif, .filtre-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .gunluk-badge { background: rgba(26,127,75,0.1); border: 1.5px solid rgba(26,127,75,0.3); color: var(--green); border-radius: 20px; padding: 0.35rem 1rem; font-size: 0.8rem; font-weight: 700; }
+        [data-theme="dark"] .gunluk-badge { background: rgba(63,185,80,0.15); border-color: rgba(63,185,80,0.3); }
+        .eski-uyari { background: rgba(183,134,11,0.1); border: 1px solid rgba(183,134,11,0.3); border-radius: 10px; padding: 0.6rem 1rem; color: #b7860b; font-size: 0.8rem; margin-bottom: 1rem; display: none; }
+        [data-theme="dark"] .eski-uyari { background: rgba(227,179,65,0.1); border-color: rgba(227,179,65,0.3); color: var(--accent2); }
         .haber-liste { display: flex; flex-direction: column; gap: 0.75rem; }
         .haber-item { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; box-shadow: var(--shadow); transition: border-color 0.2s; }
         .haber-item:hover { border-color: var(--accent); }
-        .haber-item[data-kategori="Ekonomi"] { display: none; }
-        .haber-item[data-kategori="Sirket"] { display: none; }
+        .haber-item.eski { opacity: 0.5; border-left: 3px solid rgba(183,134,11,0.4); }
         .haber-ust { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.5rem; }
         .sentiment-badge { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 999px; white-space: nowrap; flex-shrink: 0; margin-top: 2px; font-weight: 600; }
         .sentiment-badge.Olumlu { background: rgba(26,127,75,0.1); color: var(--green); border: 1px solid rgba(26,127,75,0.25); }
@@ -79,10 +82,14 @@
     <div class="top-bar">
         <a href="/" class="back-btn">← Ana Sayfa</a>
         <div class="page-title">
-            <h1>📰 Piyasa Haberleri</h1>
-            <div class="sub">Son 3 aylık BIST ve ekonomi haberleri · {{ analiz_tarihi }}</div>
+            <h1>📰 Günlük Piyasa Haberleri</h1>
+            <div class="sub">Bugünün BIST ve ekonomi haberleri · {{ analiz_tarihi }}</div>
         </div>
         <a href="/haberler" class="refresh-btn">🔄 Yenile</a>
+    </div>
+
+    <div id="eskiUyari" class="eski-uyari">
+        ℹ️ Bugüne ait haber bulunamadı, en güncel haberler gösteriliyor.
     </div>
 
     {% set olumlu_sayi = haberler | selectattr('sentiment', 'equalto', 'Olumlu') | list | length %}
@@ -92,19 +99,20 @@
     <div class="ozet-grid">
         <div class="ozet-kart">
             <div class="sayi" style="color:var(--green)">{{ olumlu_sayi }}</div>
-            <div class="label">✅ Olumlu Haber</div>
+            <div class="label">✅ Olumlu</div>
         </div>
         <div class="ozet-kart">
             <div class="sayi" style="color:var(--red)">{{ olumsuz_sayi }}</div>
-            <div class="label">⚠️ Olumsuz Haber</div>
+            <div class="label">⚠️ Olumsuz</div>
         </div>
         <div class="ozet-kart">
             <div class="sayi" style="color:var(--muted)">{{ notr_sayi }}</div>
-            <div class="label">➖ Nötr Haber</div>
+            <div class="label">➖ Nötr</div>
         </div>
     </div>
 
     <div class="filtre-bar">
+        <span class="gunluk-badge">📅 {{ analiz_tarihi[:10] }}</span>
         <button class="filtre-btn aktif" onclick="filtrele('Tumu', this)">🌐 Tümü</button>
         <button class="filtre-btn" onclick="filtrele('Borsa', this)">📈 Borsa</button>
         <button class="filtre-btn" onclick="filtrele('Ekonomi', this)">💹 Ekonomi</button>
@@ -116,7 +124,7 @@
     {% if haberler %}
     <div class="haber-liste" id="haberListe">
         {% for haber in haberler %}
-        <div class="haber-item" data-kategori="{{ haber.kategori }}" data-sentiment="{{ haber.sentiment }}">
+        <div class="haber-item" data-kategori="{{ haber.kategori }}" data-sentiment="{{ haber.sentiment }}" data-tarih="{{ haber.tarih_iso }}">
             <div class="haber-ust">
                 <span class="sentiment-badge {{ haber.sentiment }}">
                     {{ '✅ Olumlu' if haber.sentiment == 'Olumlu' else '⚠️ Olumsuz' if haber.sentiment == 'Olumsuz' else '➖ Nötr' }}
@@ -136,7 +144,8 @@
     {% else %}
     <div class="bos-mesaj">
         <div class="icon">📰</div>
-        <p>Haber bulunamadı.</p>
+        <p>Bugüne ait haber bulunamadı.</p>
+        <p style="font-size:0.82rem;margin-top:0.5rem">Biraz sonra tekrar deneyin.</p>
     </div>
     {% endif %}
 
@@ -145,10 +154,25 @@
     </div>
 </div>
 <script>
+const BUGUN = "{{ bugun }}";
+
+function gunlukFiltrele() {
+    const items = document.querySelectorAll('.haber-item');
+    let bugunVar = false;
+    items.forEach(item => {
+        const tarih = item.dataset.tarih || "";
+        if (tarih === BUGUN) {
+            bugunVar = true;
+        }
+    });
+    if (!bugunVar && items.length > 0) {
+        document.getElementById('eskiUyari').style.display = 'block';
+    }
+}
+
 function filtrele(tip, btn) {
     document.querySelectorAll('.filtre-btn').forEach(b => b.classList.remove('aktif'));
     btn.classList.add('aktif');
-
     document.querySelectorAll('.haber-item').forEach(item => {
         if (tip === 'Tumu') {
             item.style.display = 'block';
@@ -167,12 +191,14 @@ function temaToggle() {
     localStorage.setItem('tema', yeni);
     document.getElementById('temaBtn').textContent = yeni === 'dark' ? '☀️' : '🌙';
 }
+
 (function() {
     const kayitli = localStorage.getItem('tema') || 'light';
     document.documentElement.setAttribute('data-theme', kayitli);
     document.addEventListener('DOMContentLoaded', function() {
         const btn = document.getElementById('temaBtn');
         if (btn) btn.textContent = kayitli === 'dark' ? '☀️' : '🌙';
+        gunlukFiltrele();
     });
 })();
 </script>
