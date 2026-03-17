@@ -27,30 +27,31 @@
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; padding: 1.5rem 1rem 3rem; transition: background 0.2s, color 0.2s; }
-        .tema-btn { position: fixed; top: 1rem; right: 1rem; background: var(--toggle-bg); border: 1.5px solid var(--toggle-border); border-radius: 50%; width: 42px; height: 42px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 999; box-shadow: var(--shadow); transition: all 0.2s; }
+        .tema-btn { position: fixed; top: 1rem; right: 1rem; background: var(--toggle-bg); border: 1.5px solid var(--toggle-border); border-radius: 50%; width: 42px; height: 42px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 999; box-shadow: var(--shadow); }
         .tema-btn:hover { transform: scale(1.1); }
         .page-wrap { max-width: 900px; margin: 0 auto; }
         .top-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
         .back-btn { background: var(--nav-bg); border: 1.5px solid var(--toggle-border); color: var(--accent); border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; text-decoration: none; font-weight: 600; }
-        .back-btn:hover { opacity: 0.8; }
         .page-title h1 { font-size: 1.6rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
         .page-title .sub { color: var(--muted); font-size: 0.85rem; margin-top: 0.2rem; }
         .refresh-btn { background: linear-gradient(135deg, var(--accent) 0%, #2d5fa6 100%); color: #fff; border: none; border-radius: 8px; padding: 0.55rem 1.2rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-decoration: none; margin-left: auto; }
         .ozet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.25rem; }
-        .ozet-kart { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center; box-shadow: var(--shadow); }
+        .ozet-kart { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center; box-shadow: var(--shadow); cursor: pointer; transition: border-color 0.2s; }
+        .ozet-kart:hover { border-color: var(--accent); }
+        .ozet-kart.aktif-kart { border-color: var(--accent); background: rgba(26,60,110,0.05); }
+        [data-theme="dark"] .ozet-kart.aktif-kart { background: rgba(88,166,255,0.08); }
         .ozet-kart .sayi { font-size: 1.8rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
         .ozet-kart .label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-top: 0.25rem; }
         .filtre-bar { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap; align-items: center; }
         .filtre-btn { background: var(--surface); border: 1.5px solid var(--border); border-radius: 20px; padding: 0.35rem 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; color: var(--muted); transition: all 0.15s; }
-        .filtre-btn.aktif, .filtre-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
-        .gunluk-badge { background: rgba(26,127,75,0.1); border: 1.5px solid rgba(26,127,75,0.3); color: var(--green); border-radius: 20px; padding: 0.35rem 1rem; font-size: 0.8rem; font-weight: 700; }
-        [data-theme="dark"] .gunluk-badge { background: rgba(63,185,80,0.15); border-color: rgba(63,185,80,0.3); }
-        .eski-uyari { background: rgba(183,134,11,0.1); border: 1px solid rgba(183,134,11,0.3); border-radius: 10px; padding: 0.6rem 1rem; color: #b7860b; font-size: 0.8rem; margin-bottom: 1rem; display: none; }
-        [data-theme="dark"] .eski-uyari { background: rgba(227,179,65,0.1); border-color: rgba(227,179,65,0.3); color: var(--accent2); }
+        .filtre-btn.aktif { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .filtre-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .filtre-btn.olumsuz-btn.aktif { background: var(--red); border-color: var(--red); }
+        .filtre-btn.olumlu-btn.aktif { background: var(--green); border-color: var(--green); }
+        .haber-sayac { font-size: 0.78rem; color: var(--muted); margin-left: auto; font-weight: 600; }
         .haber-liste { display: flex; flex-direction: column; gap: 0.75rem; }
         .haber-item { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; box-shadow: var(--shadow); transition: border-color 0.2s; }
         .haber-item:hover { border-color: var(--accent); }
-        .haber-item.eski { opacity: 0.5; border-left: 3px solid rgba(183,134,11,0.4); }
         .haber-ust { display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.5rem; }
         .sentiment-badge { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 999px; white-space: nowrap; flex-shrink: 0; margin-top: 2px; font-weight: 600; }
         .sentiment-badge.Olumlu { background: rgba(26,127,75,0.1); color: var(--green); border: 1px solid rgba(26,127,75,0.25); }
@@ -70,8 +71,8 @@
         [data-theme="dark"] .kategori-Borsa { background: rgba(88,166,255,0.15); }
         [data-theme="dark"] .kategori-Ekonomi { background: rgba(227,179,65,0.15); color: var(--accent2); }
         [data-theme="dark"] .kategori-Sirket { background: rgba(63,185,80,0.15); }
-        .bos-mesaj { text-align: center; padding: 4rem 2rem; color: var(--muted); }
-        .bos-mesaj .icon { font-size: 3rem; margin-bottom: 1rem; }
+        .bos-mesaj { text-align: center; padding: 3rem 2rem; color: var(--muted); background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
+        .bos-mesaj .icon { font-size: 2.5rem; margin-bottom: 1rem; }
         .footer { text-align: center; margin-top: 2rem; color: var(--muted); font-size: 0.75rem; }
         @media (max-width: 600px) { .ozet-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
@@ -82,106 +83,132 @@
     <div class="top-bar">
         <a href="/" class="back-btn">← Ana Sayfa</a>
         <div class="page-title">
-            <h1>📰 Günlük Piyasa Haberleri</h1>
-            <div class="sub">Bugünün BIST ve ekonomi haberleri · {{ analiz_tarihi }}</div>
+            <h1>📰 Piyasa Haberleri</h1>
+            <div class="sub">Güncel BIST ve ekonomi haberleri · {{ analiz_tarihi }}</div>
         </div>
         <a href="/haberler" class="refresh-btn">🔄 Yenile</a>
     </div>
 
-    <div id="eskiUyari" class="eski-uyari">
-        ℹ️ Bugüne ait haber bulunamadı, en güncel haberler gösteriliyor.
-    </div>
-
-    {% set olumlu_sayi = haberler | selectattr('sentiment', 'equalto', 'Olumlu') | list | length %}
-    {% set olumsuz_sayi = haberler | selectattr('sentiment', 'equalto', 'Olumsuz') | list | length %}
-    {% set notr_sayi = haberler | selectattr('sentiment', 'equalto', 'Notr') | list | length %}
-
     <div class="ozet-grid">
-        <div class="ozet-kart">
-            <div class="sayi" style="color:var(--green)">{{ olumlu_sayi }}</div>
+        <div class="ozet-kart" onclick="filtrele('Olumlu', null)" id="kartOlumlu">
+            <div class="sayi" style="color:var(--green)" id="sayiOlumlu">0</div>
             <div class="label">✅ Olumlu</div>
         </div>
-        <div class="ozet-kart">
-            <div class="sayi" style="color:var(--red)">{{ olumsuz_sayi }}</div>
+        <div class="ozet-kart" onclick="filtrele('Olumsuz', null)" id="kartOlumsuz">
+            <div class="sayi" style="color:var(--red)" id="sayiOlumsuz">0</div>
             <div class="label">⚠️ Olumsuz</div>
         </div>
-        <div class="ozet-kart">
-            <div class="sayi" style="color:var(--muted)">{{ notr_sayi }}</div>
+        <div class="ozet-kart" onclick="filtrele('Notr', null)" id="kartNotr">
+            <div class="sayi" style="color:var(--muted)" id="sayiNotr">0</div>
             <div class="label">➖ Nötr</div>
         </div>
     </div>
 
     <div class="filtre-bar">
-        <span class="gunluk-badge">📅 {{ analiz_tarihi[:10] }}</span>
-        <button class="filtre-btn aktif" onclick="filtrele('Tumu', this)">🌐 Tümü</button>
+        <button class="filtre-btn aktif" onclick="filtrele('Tumu', this)" id="btnTumu">🌐 Tümü</button>
         <button class="filtre-btn" onclick="filtrele('Borsa', this)">📈 Borsa</button>
         <button class="filtre-btn" onclick="filtrele('Ekonomi', this)">💹 Ekonomi</button>
         <button class="filtre-btn" onclick="filtrele('Sirket', this)">🏭 Şirket</button>
-        <button class="filtre-btn" onclick="filtrele('Olumlu', this)">✅ Olumlu</button>
-        <button class="filtre-btn" onclick="filtrele('Olumsuz', this)">⚠️ Olumsuz</button>
+        <button class="filtre-btn olumlu-btn" onclick="filtrele('Olumlu', this)">✅ Olumlu</button>
+        <button class="filtre-btn olumsuz-btn" onclick="filtrele('Olumsuz', this)">⚠️ Olumsuz</button>
+        <span class="haber-sayac" id="haberSayac"></span>
     </div>
 
-    {% if haberler %}
     <div class="haber-liste" id="haberListe">
-        {% for haber in haberler %}
-        <div class="haber-item" data-kategori="{{ haber.kategori }}" data-sentiment="{{ haber.sentiment }}" data-tarih="{{ haber.tarih_iso }}">
-            <div class="haber-ust">
-                <span class="sentiment-badge {{ haber.sentiment }}">
-                    {{ '✅ Olumlu' if haber.sentiment == 'Olumlu' else '⚠️ Olumsuz' if haber.sentiment == 'Olumsuz' else '➖ Nötr' }}
-                </span>
-                <div class="haber-baslik">
-                    {% if haber.url %}<a href="{{ haber.url }}" target="_blank">{{ haber.baslik }}</a>{% else %}{{ haber.baslik }}{% endif %}
+        {% if haberler %}
+            {% for haber in haberler %}
+            <div class="haber-item"
+                 data-kategori="{{ haber.kategori }}"
+                 data-sentiment="{{ haber.sentiment }}"
+                 data-tarih="{{ haber.tarih_iso }}">
+                <div class="haber-ust">
+                    <span class="sentiment-badge {{ haber.sentiment }}">
+                        {{ '✅ Olumlu' if haber.sentiment == 'Olumlu' else '⚠️ Olumsuz' if haber.sentiment == 'Olumsuz' else '➖ Nötr' }}
+                    </span>
+                    <div class="haber-baslik">
+                        {% if haber.url %}<a href="{{ haber.url }}" target="_blank">{{ haber.baslik }}</a>{% else %}{{ haber.baslik }}{% endif %}
+                    </div>
+                </div>
+                <div class="haber-meta">
+                    <span class="kategori-badge kategori-{{ haber.kategori }}">{{ haber.kategori }}</span>
+                    <span>📌 {{ haber.kaynak }}</span>
+                    {% if haber.tarih %}<span>📅 {{ haber.tarih }}</span>{% endif %}
                 </div>
             </div>
-            <div class="haber-meta">
-                <span class="kategori-badge kategori-{{ haber.kategori }}">{{ haber.kategori }}</span>
-                <span>📌 {{ haber.kaynak }}</span>
-                {% if haber.tarih %}<span>📅 {{ haber.tarih }}</span>{% endif %}
-            </div>
-        </div>
-        {% endfor %}
+            {% endfor %}
+        {% endif %}
     </div>
-    {% else %}
-    <div class="bos-mesaj">
-        <div class="icon">📰</div>
-        <p>Bugüne ait haber bulunamadı.</p>
-        <p style="font-size:0.82rem;margin-top:0.5rem">Biraz sonra tekrar deneyin.</p>
-    </div>
-    {% endif %}
 
     <div class="footer">
         ⚠️ Yatırım tavsiyesi değildir · <a href="/firsatlar" style="color:var(--accent)">Fırsat Hisseleri</a> · <a href="/ozet" style="color:var(--accent)">Piyasa Özeti</a>
     </div>
 </div>
 <script>
-const BUGUN = "{{ bugun }}";
+let aktifFiltre = 'Tumu';
 
-function gunlukFiltrele() {
-    const items = document.querySelectorAll('.haber-item');
-    let bugunVar = false;
-    items.forEach(item => {
-        const tarih = item.dataset.tarih || "";
-        if (tarih === BUGUN) {
-            bugunVar = true;
+function guncelleSayac() {
+    const gorunenler = Array.from(document.querySelectorAll('.haber-item')).filter(i => i.style.display !== 'none');
+    document.getElementById('haberSayac').textContent = gorunenler.length + ' haber';
+
+    const olumlu = gorunenler.filter(i => i.dataset.sentiment === 'Olumlu').length;
+    const olumsuz = gorunenler.filter(i => i.dataset.sentiment === 'Olumsuz').length;
+    const notr = gorunenler.filter(i => i.dataset.sentiment === 'Notr').length;
+    document.getElementById('sayiOlumlu').textContent = olumlu;
+    document.getElementById('sayiOlumsuz').textContent = olumsuz;
+    document.getElementById('sayiNotr').textContent = notr;
+}
+
+function tarihFiltrele() {
+    // 7 günden eski haberleri gizle
+    const yediGunOnce = new Date();
+    yediGunOnce.setDate(yediGunOnce.getDate() - 7);
+    const sinir = yediGunOnce.toISOString().split('T')[0];
+
+    document.querySelectorAll('.haber-item').forEach(item => {
+        const tarih = item.dataset.tarih || '';
+        if (tarih && tarih < sinir) {
+            item.remove(); // Çok eski olanları tamamen kaldır
         }
     });
-    if (!bugunVar && items.length > 0) {
-        document.getElementById('eskiUyari').style.display = 'block';
-    }
 }
 
 function filtrele(tip, btn) {
+    aktifFiltre = tip;
+
+    // Buton aktif durumu
     document.querySelectorAll('.filtre-btn').forEach(b => b.classList.remove('aktif'));
-    btn.classList.add('aktif');
+    document.querySelectorAll('.ozet-kart').forEach(k => k.classList.remove('aktif-kart'));
+
+    if (btn) {
+        btn.classList.add('aktif');
+    } else {
+        // Kart tıklandı
+        if (tip === 'Olumlu') document.getElementById('kartOlumlu').classList.add('aktif-kart');
+        if (tip === 'Olumsuz') document.getElementById('kartOlumsuz').classList.add('aktif-kart');
+        if (tip === 'Notr') document.getElementById('kartNotr').classList.add('aktif-kart');
+    }
+
     document.querySelectorAll('.haber-item').forEach(item => {
         if (tip === 'Tumu') {
             item.style.display = 'block';
-        } else if (tip === 'Olumlu' || tip === 'Olumsuz') {
+        } else if (tip === 'Olumlu' || tip === 'Olumsuz' || tip === 'Notr') {
             item.style.display = item.dataset.sentiment === tip ? 'block' : 'none';
         } else {
             item.style.display = item.dataset.kategori === tip ? 'block' : 'none';
         }
     });
+
+    // Boş mesaj
+    const gorunenler = Array.from(document.querySelectorAll('.haber-item')).filter(i => i.style.display !== 'none');
+    const liste = document.getElementById('haberListe');
+    const mevcutBos = liste.querySelector('.bos-mesaj');
+    if (mevcutBos) mevcutBos.remove();
+
+    if (gorunenler.length === 0) {
+        liste.innerHTML += `<div class="bos-mesaj"><div class="icon">📭</div><p>${tip === 'Olumsuz' ? 'Bugün olumsuz haber bulunamadı.' : 'Bu kategoride haber yok.'}</p></div>`;
+    }
+
+    guncelleSayac();
 }
 
 function temaToggle() {
@@ -198,7 +225,8 @@ function temaToggle() {
     document.addEventListener('DOMContentLoaded', function() {
         const btn = document.getElementById('temaBtn');
         if (btn) btn.textContent = kayitli === 'dark' ? '☀️' : '🌙';
-        gunlukFiltrele();
+        tarihFiltrele();
+        guncelleSayac();
     });
 })();
 </script>
