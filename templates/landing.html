@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borsa AI — BIST'in En Zekâ Analiz Platformu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #0a1628;
+            --navy2: #0f2040;
+            --gold: #c9a84c;
+            --gold2: #e8c96b;
+            --green: #22c55e;
+            --red: #ef4444;
+            --text: #e8edf5;
+            --muted: #7a8899;
+            --card: rgba(255,255,255,0.04);
+            --border: rgba(201,168,76,0.18);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            background: var(--navy);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Arka plan doku ── */
+        body::before {
+            content:'';
+            position:fixed; inset:0;
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 10%, rgba(201,168,76,0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(34,197,94,0.05) 0%, transparent 60%),
+                repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(255,255,255,0.012) 60px, rgba(255,255,255,0.012) 61px),
+                repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,0.012) 60px, rgba(255,255,255,0.012) 61px);
+            pointer-events:none; z-index:0;
+        }
+
+        /* ── Nav ── */
+        nav {
+            position:fixed; top:0; left:0; right:0; z-index:100;
+            display:flex; align-items:center; justify-content:space-between;
+            padding:1.2rem 2.5rem;
+            background:rgba(10,22,40,0.85);
+            backdrop-filter:blur(16px);
+            border-bottom:1px solid rgba(201,168,76,0.1);
+        }
+        .nav-logo { font-family:'JetBrains Mono',monospace; font-size:1.25rem; font-weight:600; color:var(--gold); letter-spacing:-0.02em; }
+        .nav-logo span { color:var(--text); }
+        .nav-links { display:flex; gap:2rem; }
+        .nav-links a { color:var(--muted); text-decoration:none; font-size:0.88rem; font-weight:500; transition:color 0.2s; }
+        .nav-links a:hover { color:var(--gold); }
+        .nav-cta { display:flex; gap:0.75rem; }
+        .btn-outline { padding:0.5rem 1.25rem; border:1.5px solid var(--border); border-radius:8px; color:var(--gold); font-size:0.88rem; font-weight:600; text-decoration:none; transition:all 0.2s; background:transparent; cursor:pointer; }
+        .btn-outline:hover { background:rgba(201,168,76,0.1); border-color:var(--gold); }
+        .btn-primary { padding:0.5rem 1.4rem; border-radius:8px; background:linear-gradient(135deg,var(--gold),#b8922f); color:#0a1628; font-size:0.88rem; font-weight:700; text-decoration:none; transition:all 0.2s; border:none; cursor:pointer; }
+        .btn-primary:hover { opacity:0.9; transform:translateY(-1px); }
+
+        /* ── Hero ── */
+        .hero {
+            position:relative; z-index:1;
+            min-height:100vh;
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            text-align:center;
+            padding:7rem 1.5rem 4rem;
+        }
+        .hero-badge {
+            display:inline-flex; align-items:center; gap:0.5rem;
+            background:rgba(201,168,76,0.12); border:1px solid rgba(201,168,76,0.3);
+            border-radius:999px; padding:0.4rem 1.1rem;
+            font-size:0.78rem; font-weight:600; color:var(--gold);
+            margin-bottom:2rem;
+            animation: fadeInDown 0.6s ease both;
+        }
+        .hero-badge .dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        @keyframes fadeInDown { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+        .hero h1 {
+            font-family:'Playfair Display',serif;
+            font-size:clamp(2.8rem,7vw,5.5rem);
+            font-weight:900;
+            line-height:1.05;
+            letter-spacing:-0.02em;
+            margin-bottom:1.5rem;
+            animation:fadeInUp 0.7s 0.15s ease both;
+        }
+        .hero h1 .gold { color:var(--gold); font-style:italic; }
+        .hero h1 .line2 { display:block; }
+
+        .hero-desc {
+            font-size:1.15rem; color:var(--muted); max-width:560px; line-height:1.7;
+            margin-bottom:2.5rem;
+            animation:fadeInUp 0.7s 0.3s ease both;
+        }
+        .hero-desc strong { color:var(--text); font-weight:600; }
+
+        .hero-cta {
+            display:flex; gap:1rem; flex-wrap:wrap; justify-content:center;
+            animation:fadeInUp 0.7s 0.45s ease both;
+        }
+        .btn-hero {
+            padding:0.9rem 2.2rem; border-radius:10px;
+            background:linear-gradient(135deg,var(--gold),#b8922f);
+            color:#0a1628; font-size:1rem; font-weight:700;
+            text-decoration:none; transition:all 0.2s;
+            box-shadow:0 4px 24px rgba(201,168,76,0.3);
+        }
+        .btn-hero:hover { transform:translateY(-2px); box-shadow:0 8px 32px rgba(201,168,76,0.4); }
+        .btn-hero-outline {
+            padding:0.9rem 2.2rem; border-radius:10px;
+            border:1.5px solid rgba(201,168,76,0.35);
+            color:var(--gold); font-size:1rem; font-weight:600;
+            text-decoration:none; transition:all 0.2s;
+        }
+        .btn-hero-outline:hover { background:rgba(201,168,76,0.08); border-color:var(--gold); }
+
+        /* ── Ticker ── */
+        .ticker-wrap {
+            position:relative; z-index:1;
+            overflow:hidden;
+            border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+            background:rgba(0,0,0,0.25);
+            padding:0.75rem 0;
+            margin-bottom:0;
+        }
+        .ticker {
+            display:flex; gap:3rem;
+            animation:ticker 25s linear infinite;
+            width:max-content;
+        }
+        @keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+        .ticker-item { display:flex; align-items:center; gap:0.6rem; font-family:'JetBrains Mono',monospace; font-size:0.82rem; white-space:nowrap; }
+        .ticker-sym { font-weight:600; color:var(--text); }
+        .ticker-price { color:var(--muted); }
+        .ticker-chg.up { color:var(--green); } .ticker-chg.dn { color:var(--red); }
+
+        /* ── Teaser (kilitli analiz) ── */
+        .teaser-section {
+            position:relative; z-index:1;
+            padding:5rem 1.5rem;
+            max-width:1100px; margin:0 auto;
+        }
+        .section-label {
+            text-align:center;
+            font-size:0.78rem; color:var(--gold); text-transform:uppercase;
+            letter-spacing:0.15em; font-weight:700; margin-bottom:0.75rem;
+        }
+        .section-title {
+            text-align:center;
+            font-family:'Playfair Display',serif;
+            font-size:clamp(1.8rem,4vw,3rem);
+            font-weight:700; margin-bottom:1rem;
+        }
+        .section-desc { text-align:center; color:var(--muted); max-width:520px; margin:0 auto 3rem; line-height:1.7; }
+
+        /* Analiz kartı teaser */
+        .teaser-card {
+            background:var(--card);
+            border:1px solid var(--border);
+            border-radius:18px;
+            overflow:hidden;
+            position:relative;
+        }
+        .teaser-card-header {
+            background:rgba(201,168,76,0.06);
+            border-bottom:1px solid var(--border);
+            padding:1.25rem 1.75rem;
+            display:flex; align-items:center; gap:1rem;
+        }
+        .teaser-sym { font-family:'JetBrains Mono',monospace; font-size:1.4rem; font-weight:700; color:var(--gold); }
+        .teaser-price { font-family:'JetBrains Mono',monospace; font-size:1.1rem; color:var(--text); }
+        .teaser-chg { font-family:'JetBrains Mono',monospace; font-size:0.9rem; color:var(--green); font-weight:600; }
+        .teaser-body { padding:1.75rem; display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+        .teaser-metric { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:0.9rem 1rem; }
+        .teaser-metric-label { font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:0.35rem; font-weight:600; }
+        .teaser-metric-val { font-family:'JetBrains Mono',monospace; font-size:1.05rem; font-weight:700; color:var(--text); }
+
+        /* Blur overlay */
+        .blur-overlay {
+            position:absolute; bottom:0; left:0; right:0;
+            height:60%;
+            background:linear-gradient(to bottom, transparent 0%, rgba(10,22,40,0.96) 60%, var(--navy) 100%);
+            display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+            padding-bottom:2.5rem;
+        }
+        .blur-overlay .lock { font-size:2rem; margin-bottom:0.75rem; }
+        .blur-overlay p { color:var(--muted); font-size:0.9rem; margin-bottom:1.25rem; }
+        .blur-overlay a { text-decoration:none; }
+
+        /* ── Özellikler ── */
+        .features-section {
+            position:relative; z-index:1;
+            padding:5rem 1.5rem;
+            max-width:1100px; margin:0 auto;
+        }
+        .features-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1.25rem; }
+        .feature-card {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:14px; padding:1.75rem;
+            transition:border-color 0.2s, transform 0.2s;
+        }
+        .feature-card:hover { border-color:rgba(201,168,76,0.4); transform:translateY(-3px); }
+        .feature-icon { font-size:2rem; margin-bottom:1rem; }
+        .feature-title { font-size:1rem; font-weight:700; margin-bottom:0.5rem; }
+        .feature-desc { font-size:0.87rem; color:var(--muted); line-height:1.6; }
+
+        /* ── Nasıl Çalışır ── */
+        .how-section {
+            position:relative; z-index:1;
+            padding:5rem 1.5rem;
+            max-width:900px; margin:0 auto;
+        }
+        .steps { display:grid; gap:1.5rem; }
+        .step { display:flex; gap:1.5rem; align-items:flex-start; }
+        .step-num {
+            min-width:48px; height:48px;
+            border-radius:50%; border:2px solid var(--gold);
+            display:flex; align-items:center; justify-content:center;
+            font-family:'JetBrains Mono',monospace; font-size:1.1rem; font-weight:700; color:var(--gold);
+            flex-shrink:0;
+        }
+        .step-content h3 { font-size:1rem; font-weight:700; margin-bottom:0.35rem; }
+        .step-content p { font-size:0.88rem; color:var(--muted); line-height:1.6; }
+
+        /* ── CTA Bottom ── */
+        .cta-section {
+            position:relative; z-index:1;
+            text-align:center;
+            padding:6rem 1.5rem;
+            background:linear-gradient(to bottom, transparent, rgba(201,168,76,0.04), transparent);
+        }
+        .cta-section h2 { font-family:'Playfair Display',serif; font-size:clamp(2rem,5vw,3.5rem); font-weight:900; margin-bottom:1rem; }
+        .cta-section p { color:var(--muted); font-size:1rem; margin-bottom:2.5rem; }
+
+        /* ── Footer ── */
+        footer {
+            position:relative; z-index:1;
+            text-align:center;
+            padding:2rem;
+            border-top:1px solid rgba(255,255,255,0.06);
+            color:var(--muted); font-size:0.8rem;
+        }
+        .made-by { margin-top:0.5rem; color:var(--gold); font-weight:600; }
+        .insta-link { display:inline-block; margin-top:0.5rem; color:#fff; background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045); border-radius:6px; padding:0.25rem 0.75rem; font-weight:700; text-decoration:none; font-size:0.85rem; }
+
+        @media(max-width:768px) {
+            nav { padding:1rem 1.25rem; }
+            .nav-links { display:none; }
+            .teaser-body { grid-template-columns:1fr 1fr; }
+        }
+        @media(max-width:480px) {
+            .teaser-body { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-logo">📈 Borsa<span>AI</span></div>
+    <div class="nav-links">
+        <a href="#ozellikler">Özellikler</a>
+        <a href="#nasil">Nasıl Çalışır?</a>
+    </div>
+    <div class="nav-cta">
+        <a href="/giris" class="btn-outline">Giriş Yap</a>
+        <a href="/kayit" class="btn-primary">Ücretsiz Kaydol</a>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-badge"><span class="dot"></span> Claude AI destekli · BIST 100+ hisse</div>
+    <h1>
+        BIST hisseleri için<br>
+        <span class="gold">yapay zekâ</span><span class="line2"> destekli analiz</span>
+    </h1>
+    <p class="hero-desc">
+        RSI, MACD, Bollinger, F/K, ROE — hepsini saniyeler içinde analiz et.
+        <strong>Claude AI</strong> ile profesyonel yatırım raporu al. KAP haberleri, sektör karşılaştırması ve daha fazlası.
+    </p>
+    <div class="hero-cta">
+        <a href="/kayit" class="btn-hero">🚀 Ücretsiz Başla</a>
+        <a href="/giris" class="btn-hero-outline">Giriş Yap</a>
+    </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+    <div class="ticker">
+        <!-- Set 1 -->
+        <div class="ticker-item"><span class="ticker-sym">THYAO</span><span class="ticker-price">234.50 ₺</span><span class="ticker-chg up">▲ +2.3%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">GARAN</span><span class="ticker-price">89.20 ₺</span><span class="ticker-chg dn">▼ -0.8%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">AKBNK</span><span class="ticker-price">67.45 ₺</span><span class="ticker-chg up">▲ +1.1%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">EREGL</span><span class="ticker-price">54.30 ₺</span><span class="ticker-chg up">▲ +0.5%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">ASELS</span><span class="ticker-price">178.60 ₺</span><span class="ticker-chg dn">▼ -1.2%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">KCHOL</span><span class="ticker-price">145.90 ₺</span><span class="ticker-chg up">▲ +3.1%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">BIMAS</span><span class="ticker-price">312.00 ₺</span><span class="ticker-chg up">▲ +0.7%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">FROTO</span><span class="ticker-price">1.245 ₺</span><span class="ticker-chg dn">▼ -0.4%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">TUPRS</span><span class="ticker-price">198.40 ₺</span><span class="ticker-chg up">▲ +1.8%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">TCELL</span><span class="ticker-price">112.30 ₺</span><span class="ticker-chg up">▲ +0.9%</span></div>
+        <!-- Set 2 (kopya, sürekli döngü için) -->
+        <div class="ticker-item"><span class="ticker-sym">THYAO</span><span class="ticker-price">234.50 ₺</span><span class="ticker-chg up">▲ +2.3%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">GARAN</span><span class="ticker-price">89.20 ₺</span><span class="ticker-chg dn">▼ -0.8%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">AKBNK</span><span class="ticker-price">67.45 ₺</span><span class="ticker-chg up">▲ +1.1%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">EREGL</span><span class="ticker-price">54.30 ₺</span><span class="ticker-chg up">▲ +0.5%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">ASELS</span><span class="ticker-price">178.60 ₺</span><span class="ticker-chg dn">▼ -1.2%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">KCHOL</span><span class="ticker-price">145.90 ₺</span><span class="ticker-chg up">▲ +3.1%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">BIMAS</span><span class="ticker-price">312.00 ₺</span><span class="ticker-chg up">▲ +0.7%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">FROTO</span><span class="ticker-price">1.245 ₺</span><span class="ticker-chg dn">▼ -0.4%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">TUPRS</span><span class="ticker-price">198.40 ₺</span><span class="ticker-chg up">▲ +1.8%</span></div>
+        <div class="ticker-item"><span class="ticker-sym">TCELL</span><span class="ticker-price">112.30 ₺</span><span class="ticker-chg up">▲ +0.9%</span></div>
+    </div>
+</div>
+
+<!-- TEASER ANALİZ -->
+<section class="teaser-section">
+    <div class="section-label">✦ Örnek Analiz</div>
+    <h2 class="section-title">Üye olanlara bu kadar fazlası var</h2>
+    <p class="section-desc">Gerçek zamanlı veriler, AI raporu ve çok daha fazlası — hepsi bir tıkla.</p>
+
+    <div class="teaser-card">
+        <div class="teaser-card-header">
+            <span class="teaser-sym">THYAO</span>
+            <span class="teaser-price">234.50 ₺</span>
+            <span class="teaser-chg">▲ +2.3%</span>
+            <span style="margin-left:auto;font-size:0.75rem;color:var(--muted)">Türk Hava Yolları A.O.</span>
+        </div>
+        <div class="teaser-body">
+            <div class="teaser-metric"><div class="teaser-metric-label">RSI (14)</div><div class="teaser-metric-val" style="color:#22c55e">38.4</div></div>
+            <div class="teaser-metric"><div class="teaser-metric-label">F/K Oranı</div><div class="teaser-metric-val">7.2x</div></div>
+            <div class="teaser-metric"><div class="teaser-metric-label">PD/DD</div><div class="teaser-metric-val">1.4x</div></div>
+            <div class="teaser-metric"><div class="teaser-metric-label">MACD</div><div class="teaser-metric-val" style="color:#22c55e">+0.84</div></div>
+            <div class="teaser-metric"><div class="teaser-metric-label">ROE</div><div class="teaser-metric-val">%24.1</div></div>
+            <div class="teaser-metric"><div class="teaser-metric-label">Tavsiye</div><div class="teaser-metric-val" style="color:#22c55e">AL 🔒</div></div>
+        </div>
+        <div class="blur-overlay">
+            <div class="lock">🔒</div>
+            <p>AI raporu, hedef fiyat ve tam analiz için üye olun</p>
+            <a href="/kayit" class="btn-hero">Ücretsiz Kaydol →</a>
+        </div>
+    </div>
+</section>
+
+<!-- ÖZELLİKLER -->
+<section class="features-section" id="ozellikler">
+    <div class="section-label">✦ Özellikler</div>
+    <h2 class="section-title">Neden Borsa AI?</h2>
+    <p class="section-desc">Profesyonel analistlerin kullandığı tüm araçlar, tek platformda.</p>
+
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">🤖</div>
+            <div class="feature-title">Claude AI ile Derin Analiz</div>
+            <div class="feature-desc">Anthropic'in gelişmiş yapay zekâsı teknik ve temel verileri harmanlayarak size özel profesyonel rapor üretir.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <div class="feature-title">Teknik Göstergeler</div>
+            <div class="feature-desc">RSI, MACD, Bollinger Bantları, Stokastik, Hareketli Ortalamalar — 10+ gösterge otomatik hesaplanır.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">💰</div>
+            <div class="feature-title">Temel Analiz</div>
+            <div class="feature-desc">F/K, PD/DD, ROE, ROIC, Net Borç/FAVÖK — şirketin gerçek değerini anında gör.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📰</div>
+            <div class="feature-title">KAP + Haber Takibi</div>
+            <div class="feature-desc">KAP bildirimleri, Google Haberler ve Yahoo Finance'dan anlık haber akışı ile sentiment analizi.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <div class="feature-title">Fırsat Tarayıcı</div>
+            <div class="feature-desc">BIST'in en iyi fırsatlarını algoritmik puanlama sistemiyle tespit et. Hangisi RSI'da dipte?</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">💼</div>
+            <div class="feature-title">Portföy Takibi</div>
+            <div class="feature-desc">Hisselerini ekle, anlık kar/zarar takip et. Portföyünün genel durumunu tek ekranda gör.</div>
+        </div>
+    </div>
+</section>
+
+<!-- NASIL ÇALIŞIR -->
+<section class="how-section" id="nasil">
+    <div class="section-label">✦ Nasıl Çalışır?</div>
+    <h2 class="section-title" style="text-align:center;margin-bottom:3rem">3 adımda profesyonel analiz</h2>
+    <div class="steps">
+        <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+                <h3>Ücretsiz kaydol</h3>
+                <p>E-posta ve şifrenle saniyeler içinde kayıt ol. Google ile de giriş yapabilirsin.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+                <h3>Hisse sembolü gir</h3>
+                <p>THYAO, GARAN, AKBNK… İstediğin BIST hissesini yaz, analiz butona bas.</p>
+            </div>
+        </div>
+        <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+                <h3>AI raporunu al</h3>
+                <p>Teknik analiz, temel analiz, haberler ve Claude AI'nın derin analizi — hepsi saniyeler içinde.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+    <h2>Analize bugün başla</h2>
+    <p>Ücretsiz · Kredi kartı gerekmez · Kurulum yok</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+        <a href="/kayit" class="btn-hero">🚀 Ücretsiz Kaydol</a>
+        <a href="/giris" class="btn-hero-outline">Giriş Yap</a>
+    </div>
+</section>
+
+<footer>
+    <div>⚠️ Bu platform yatırım tavsiyesi vermez. Veriler bilgi amaçlıdır.</div>
+    <div class="made-by">Made by <span style="color:#e8c96b">Ahmet İlhan Arıkan</span></div>
+    <a href="https://instagram.com/ahmet.ariikan" target="_blank" class="insta-link">📸 @ahmet.ariikan</a>
+</footer>
+
+</body>
+</html>
