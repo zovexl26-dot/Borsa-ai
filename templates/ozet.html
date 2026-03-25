@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piyasa Özeti - Borsa AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        [data-theme="light"] {
+            --bg: #f4f6f9; --card: #ffffff; --border: #e2e8f0;
+            --accent: #1a3c6e; --accent2: #c9a84c;
+            --green: #1a7f4b; --red: #c0392b;
+            --text: #1a202c; --muted: #64748b;
+            --surface: #f1f4f8; --nav-bg: #dce3ed;
+            --shadow: 0 2px 16px rgba(26,60,110,0.08);
+            --toggle-bg: #dce3ed; --toggle-border: #b8c5d6;
+        }
+        [data-theme="dark"] {
+            --bg: #0d1117; --card: #161b22; --border: #30363d;
+            --accent: #58a6ff; --accent2: #e3b341;
+            --green: #3fb950; --red: #f85149;
+            --text: #e6edf3; --muted: #8b949e;
+            --surface: #21262d; --nav-bg: #21262d;
+            --shadow: 0 2px 16px rgba(0,0,0,0.3);
+            --toggle-bg: #21262d; --toggle-border: #30363d;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; padding: 1.5rem 1rem 3rem; transition: background 0.2s, color 0.2s; }
+        .tema-btn { position: fixed; top: 1rem; right: 1rem; background: var(--toggle-bg); border: 1.5px solid var(--toggle-border); border-radius: 50%; width: 42px; height: 42px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 999; box-shadow: var(--shadow); transition: all 0.2s; }
+        .tema-btn:hover { transform: scale(1.1); }
+        .page-wrap { max-width: 1100px; margin: 0 auto; }
+        .top-bar { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .back-btn { background: var(--nav-bg); border: 1.5px solid var(--toggle-border); color: var(--accent); border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.85rem; cursor: pointer; text-decoration: none; font-weight: 600; }
+        .back-btn:hover { opacity: 0.8; }
+        .page-title h1 { font-size: 1.6rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--accent); }
+        .page-title .sub { color: var(--muted); font-size: 0.85rem; margin-top: 0.2rem; }
+        .refresh-btn { background: linear-gradient(135deg, var(--accent) 0%, #2d5fa6 100%); color: #fff; border: none; border-radius: 8px; padding: 0.55rem 1.2rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-decoration: none; margin-left: auto; }
+        .ozet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        .ozet-kart { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; text-align: center; box-shadow: var(--shadow); }
+        .ozet-kart .icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .ozet-kart .sayi { font-size: 2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+        .ozet-kart .label { font-size: 0.78rem; color: var(--muted); margin-top: 0.25rem; font-weight: 600; }
+        .iki-kolon { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+        .mini-liste-kart { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); }
+        .mini-liste-baslik { padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; font-weight: 700; background: var(--surface); }
+        .mini-liste-baslik.yesil { color: var(--green); }
+        .mini-liste-baslik.kirmizi { color: var(--red); }
+        .mini-liste-item { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1.25rem; border-bottom: 1px solid rgba(226,232,240,0.4); }
+        [data-theme="dark"] .mini-liste-item { border-bottom-color: rgba(48,54,61,0.4); }
+        .mini-liste-item:last-child { border-bottom: none; }
+        .mini-sembol { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.9rem; color: var(--accent); }
+        .mini-isim { font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; }
+        .mini-degisim { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.95rem; }
+        .tablo-kart { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); }
+        .tablo-kart-baslik { padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; font-weight: 700; color: var(--accent); background: var(--surface); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { text-align: left; color: var(--muted); font-weight: 600; padding: 0.5rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.75rem; text-transform: uppercase; background: var(--surface); }
+        td { padding: 0.65rem 1rem; border-bottom: 1px solid rgba(226,232,240,0.4); font-family: 'JetBrains Mono', monospace; font-size: 0.83rem; }
+        [data-theme="dark"] td { border-bottom-color: rgba(48,54,61,0.4); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(241,244,248,0.5); }
+        [data-theme="dark"] tr:hover td { background: rgba(33,38,45,0.5); }
+        .sembol-cell { font-weight: 700; color: var(--accent); }
+        .isim-cell { font-family: 'Inter', sans-serif; color: var(--muted); font-size: 0.78rem; }
+        .analiz-cell form button { background: var(--surface); border: 1px solid var(--border); color: var(--accent); border-radius: 6px; padding: 0.25rem 0.6rem; font-size: 0.75rem; cursor: pointer; font-weight: 600; }
+        .analiz-cell form button:hover { border-color: var(--accent); }
+        .pos { color: var(--green); font-weight: 700; }
+        .neg { color: var(--red); font-weight: 700; }
+        .footer { text-align: center; margin-top: 1.5rem; color: var(--muted); font-size: 0.75rem; }
+        @media (max-width: 600px) { .ozet-grid { grid-template-columns: repeat(2, 1fr); } .iki-kolon { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<button class="tema-btn" onclick="temaToggle()" id="temaBtn">🌙</button>
+<div class="page-wrap">
+    <div class="top-bar">
+        <a href="/" class="back-btn">← Ana Sayfa</a>
+        <div class="page-title">
+            <h1>📊 Piyasa Özeti</h1>
+            <div class="sub">BIST Günlük Görünüm · {{ analiz_tarihi }}</div>
+        </div>
+        <a href="/ozet" class="refresh-btn">🔄 Yenile</a>
+    </div>
+
+    <div class="ozet-grid">
+        <div class="ozet-kart">
+            <div class="icon">📈</div>
+            <div class="sayi" style="color:var(--green)">{{ toplam_yukselis }}</div>
+            <div class="label">Yükselen Hisse</div>
+        </div>
+        <div class="ozet-kart">
+            <div class="icon">📉</div>
+            <div class="sayi" style="color:var(--red)">{{ toplam_dusus }}</div>
+            <div class="label">Düşen Hisse</div>
+        </div>
+        <div class="ozet-kart">
+            <div class="icon">🔍</div>
+            <div class="sayi" style="color:var(--accent)">{{ ozet_veriler|length }}</div>
+            <div class="label">Taranan Hisse</div>
+        </div>
+    </div>
+
+    <div class="iki-kolon">
+        <div class="mini-liste-kart">
+            <div class="mini-liste-baslik yesil">🚀 En Çok Yükselenler</div>
+            {% for h in en_cok_yukselenler %}
+            <div class="mini-liste-item">
+                <div>
+                    <div class="mini-sembol">{{ h.sembol }}</div>
+                    <div class="mini-isim">{{ h.sirket_adi[:20] }}</div>
+                </div>
+                <div class="mini-degisim pos">+{{ h.degisim }}%</div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="mini-liste-kart">
+            <div class="mini-liste-baslik kirmizi">📉 En Çok Düşenler</div>
+            {% for h in en_cok_dusenler %}
+            <div class="mini-liste-item">
+                <div>
+                    <div class="mini-sembol">{{ h.sembol }}</div>
+                    <div class="mini-isim">{{ h.sirket_adi[:20] }}</div>
+                </div>
+                <div class="mini-degisim neg">{{ h.degisim }}%</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="tablo-kart">
+        <div class="tablo-kart-baslik">📋 Tüm Hisseler</div>
+        <div style="overflow-x:auto">
+        <table>
+            <thead>
+                <tr><th>Sembol</th><th>Şirket</th><th>Fiyat</th><th>Değişim</th><th>RSI</th><th>1 Ay %</th><th>Hacim</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for h in ozet_veriler %}
+                <tr>
+                    <td class="sembol-cell">{{ h.sembol }}</td>
+                    <td class="isim-cell">{{ h.sirket_adi[:20] }}</td>
+                    <td>{{ h.fiyat }} TL</td>
+                    <td class="{{ 'pos' if h.degisim > 0 else 'neg' if h.degisim < 0 else '' }}">{{ '+' if h.degisim > 0 else '' }}{{ h.degisim }}%</td>
+                    <td class="{{ 'neg' if h.rsi and h.rsi > 70 else 'pos' if h.rsi and h.rsi < 30 else '' }}">{{ h.rsi if h.rsi else '—' }}</td>
+                    <td class="{{ 'pos' if h.perf_1ay and h.perf_1ay > 0 else 'neg' if h.perf_1ay and h.perf_1ay < 0 else '' }}">{{ ('+' if h.perf_1ay > 0 else '') + "%.1f"|format(h.perf_1ay) + '%' if h.perf_1ay else '—' }}</td>
+                    <td>{{ format_buyuk_sayi(h.hacim) }}</td>
+                    <td class="analiz-cell">
+                        <form action="/analyze" method="POST">
+                            <input type="hidden" name="sembol" value="{{ h.sembol }}">
+                            <button type="submit">Analiz</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    <div class="footer">⚠️ Yatırım tavsiyesi değildir · <a href="/firsatlar" style="color:var(--accent)">Fırsat Hisseleri</a> · <a href="/karsilastir" style="color:var(--accent)">Karşılaştır</a></div>
+</div>
+<script>
+function temaToggle() {
+    const html = document.documentElement;
+    const yeni = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    html.setAttribute('data-theme', yeni);
+    localStorage.setItem('tema', yeni);
+    document.getElementById('temaBtn').textContent = yeni === 'dark' ? '☀️' : '🌙';
+}
+(function() {
+    const kayitli = localStorage.getItem('tema') || 'light';
+    document.documentElement.setAttribute('data-theme', kayitli);
+    document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('temaBtn');
+        if (btn) btn.textContent = kayitli === 'dark' ? '☀️' : '🌙';
+    });
+})();
+</script>
+</body>
+</html>

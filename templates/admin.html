@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Paneli — Borsa AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg:#0a1628; --card:#0f2040; --card2:#111c35;
+            --border:rgba(201,168,76,0.15);
+            --gold:#c9a84c; --gold2:#e8c96b;
+            --green:#22c55e; --red:#ef4444; --blue:#3b82f6;
+            --text:#e8edf5; --muted:#7a8899;
+            --shadow:0 2px 20px rgba(0,0,0,0.4);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; }
+        .layout { display:grid; grid-template-columns:220px 1fr; min-height:100vh; }
+
+        /* Sidebar */
+        .sidebar {
+            background:var(--card); border-right:1px solid var(--border);
+            padding:1.5rem 1rem;
+            display:flex; flex-direction:column; gap:0.4rem;
+        }
+        .sidebar-logo { font-family:'JetBrains Mono',monospace; color:var(--gold); font-size:1.1rem; font-weight:700; padding:0.5rem 0.75rem; margin-bottom:1rem; }
+        .sidebar-item {
+            display:flex; align-items:center; gap:0.75rem;
+            padding:0.65rem 0.75rem; border-radius:8px;
+            color:var(--muted); font-size:0.88rem; font-weight:500;
+            text-decoration:none; transition:all 0.15s; cursor:pointer;
+        }
+        .sidebar-item:hover, .sidebar-item.active { background:rgba(201,168,76,0.1); color:var(--gold); }
+        .sidebar-sep { height:1px; background:var(--border); margin:0.75rem 0; }
+        .sidebar-bottom { margin-top:auto; }
+
+        /* Main */
+        .main { padding:2rem; overflow-y:auto; }
+        .page-header { display:flex; align-items:center; gap:1rem; margin-bottom:2rem; }
+        .page-header h1 { font-size:1.5rem; font-weight:700; }
+        .page-header .sub { color:var(--muted); font-size:0.85rem; }
+        .refresh-badge { margin-left:auto; background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.25); color:var(--green); border-radius:6px; padding:0.3rem 0.8rem; font-size:0.78rem; font-weight:600; }
+
+        /* Stat cards */
+        .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:1rem; margin-bottom:2rem; }
+        .stat-card {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:12px; padding:1.25rem;
+            box-shadow:var(--shadow);
+        }
+        .stat-label { font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; font-weight:600; margin-bottom:0.5rem; }
+        .stat-val { font-family:'JetBrains Mono',monospace; font-size:2rem; font-weight:700; }
+        .stat-val.gold { color:var(--gold); }
+        .stat-val.green { color:var(--green); }
+        .stat-val.blue { color:var(--blue); }
+        .stat-sub { font-size:0.75rem; color:var(--muted); margin-top:0.25rem; }
+
+        /* Charts */
+        .charts-row { display:grid; grid-template-columns:2fr 1fr; gap:1rem; margin-bottom:2rem; }
+        .chart-card {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:12px; padding:1.25rem; box-shadow:var(--shadow);
+        }
+        .chart-title { font-size:0.88rem; font-weight:700; color:var(--text); margin-bottom:1rem; }
+        .chart-wrap { position:relative; height:180px; }
+
+        /* Tables */
+        .tables-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:2rem; }
+        .table-card { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); }
+        .table-header { padding:0.9rem 1.25rem; border-bottom:1px solid var(--border); font-size:0.88rem; font-weight:700; background:var(--card2); }
+        table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+        th { text-align:left; color:var(--muted); font-weight:600; padding:0.5rem 1rem; border-bottom:1px solid var(--border); font-size:0.72rem; text-transform:uppercase; background:var(--card2); }
+        td { padding:0.6rem 1rem; border-bottom:1px solid rgba(255,255,255,0.04); font-family:'JetBrains Mono',monospace; font-size:0.8rem; }
+        tr:last-child td { border-bottom:none; }
+        tr:hover td { background:rgba(255,255,255,0.02); }
+
+        /* User table */
+        .user-table-wrap { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); margin-bottom:2rem; }
+        .badge-admin { background:rgba(201,168,76,0.15); color:var(--gold); border:1px solid rgba(201,168,76,0.3); border-radius:999px; padding:0.15rem 0.6rem; font-size:0.7rem; font-weight:700; }
+        .badge-user { background:rgba(59,130,246,0.12); color:#60a5fa; border:1px solid rgba(59,130,246,0.25); border-radius:999px; padding:0.15rem 0.6rem; font-size:0.7rem; font-weight:700; }
+        .sil-btn { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); color:#f87171; border-radius:6px; padding:0.2rem 0.6rem; font-size:0.72rem; cursor:pointer; font-weight:600; }
+        .sil-btn:hover { background:rgba(239,68,68,0.2); }
+
+        /* Visits table */
+        .visits-card { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); }
+        .visits-header { padding:0.9rem 1.25rem; border-bottom:1px solid var(--border); font-size:0.88rem; font-weight:700; background:var(--card2); display:flex; align-items:center; justify-content:space-between; }
+
+        .page-path { color:var(--muted); font-family:'JetBrains Mono',monospace; }
+        .count-badge { font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--gold); }
+
+        @media(max-width:900px) {
+            .layout { grid-template-columns:1fr; }
+            .sidebar { display:none; }
+            .charts-row, .tables-row { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-logo">⚡ Admin</div>
+        <a href="/admin" class="sidebar-item active">📊 Dashboard</a>
+        <div class="sidebar-sep"></div>
+        <a href="/uygulama" class="sidebar-item">📈 Uygulamaya Dön</a>
+        <div class="sidebar-bottom">
+            <a href="/cikis" class="sidebar-item">🚪 Çıkış</a>
+        </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+        <div class="page-header">
+            <div>
+                <h1>📊 Admin Paneli</h1>
+                <div class="sub">{{ analiz_tarihi }} itibarıyla</div>
+            </div>
+            <div class="refresh-badge">🟢 Canlı</div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Toplam Kullanıcı</div>
+                <div class="stat-val gold">{{ toplam_kullanici }}</div>
+                <div class="stat-sub">Admin hariç</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Toplam Ziyaret</div>
+                <div class="stat-val blue">{{ toplam_ziyaret }}</div>
+                <div class="stat-sub">Tüm zamanlar</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Bugün Ziyaret</div>
+                <div class="stat-val green">{{ bugun_ziyaret }}</div>
+                <div class="stat-sub">Bugün</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Bu Hafta</div>
+                <div class="stat-val" style="color:var(--blue)">{{ haftalik_ziyaret }}</div>
+                <div class="stat-sub">Son 7 gün</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Bugün Tekil IP</div>
+                <div class="stat-val" style="color:var(--gold2)">{{ unique_ip_bugun }}</div>
+                <div class="stat-sub">Farklı ziyaretçi</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Toplam Tekil IP</div>
+                <div class="stat-val" style="color:var(--muted)">{{ unique_ip_toplam }}</div>
+                <div class="stat-sub">Toplam tekil</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-row">
+            <div class="chart-card">
+                <div class="chart-title">📅 Günlük Ziyaret (Son 7 Gün)</div>
+                <div class="chart-wrap">
+                    <canvas id="gunlukChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">📌 En Çok Ziyaret Edilen Sayfalar</div>
+                <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.5rem">
+                    {% for sayfa, sayi in sayfa_sayac %}
+                    <div style="display:flex;align-items:center;gap:0.75rem">
+                        <span class="page-path" style="font-size:0.78rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ sayfa }}</span>
+                        <span class="count-badge">{{ sayi }}</span>
+                        <div style="width:60px;height:6px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden">
+                            <div style="height:100%;background:var(--gold);border-radius:999px;width:{{ [((sayi / (sayfa_sayac[0][1] if sayfa_sayac else 1)) * 100)|int, 100]|min }}%"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Tables row -->
+        <div class="tables-row">
+            <!-- Users -->
+            <div class="table-card">
+                <div class="table-header">👤 Kayıtlı Kullanıcılar ({{ toplam_kullanici }})</div>
+                <div style="overflow-x:auto">
+                <table>
+                    <thead><tr><th>Kullanıcı</th><th>Tür</th><th>Kayıt</th><th></th></tr></thead>
+                    <tbody>
+                    {% for email, user in users.items() %}
+                    <tr>
+                        <td>
+                            <div style="font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.82rem;color:var(--text)">{{ user.username }}</div>
+                            <div style="color:var(--muted);font-size:0.72rem;font-family:'DM Sans',sans-serif">{{ email }}</div>
+                        </td>
+                        <td>{% if user.is_admin %}<span class="badge-admin">Admin</span>{% else %}<span class="badge-user">Üye</span>{% endif %}</td>
+                        <td style="color:var(--muted);font-size:0.75rem">{{ (user.created_at or '')[:10] }}</td>
+                        <td>
+                            {% if not user.is_admin %}
+                            <form method="POST" action="/admin/kullanici-sil/{{ email }}" onsubmit="return confirm('Kullanıcı silinsin mi?')">
+                                <button class="sil-btn">Sil</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            <!-- Sayfa istatistikleri -->
+            <div class="table-card">
+                <div class="table-header">📊 Sayfa İstatistikleri</div>
+                <div style="overflow-x:auto">
+                <table>
+                    <thead><tr><th>Sayfa</th><th>Ziyaret</th></tr></thead>
+                    <tbody>
+                    {% for sayfa, sayi in sayfa_sayac %}
+                    <tr>
+                        <td class="page-path">{{ sayfa }}</td>
+                        <td class="count-badge">{{ sayi }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Son Ziyaretler -->
+        <div class="visits-card">
+            <div class="visits-header">
+                <span>🕐 Son Ziyaretler</span>
+                <span style="font-size:0.78rem;color:var(--muted)">Son 50 kayıt</span>
+            </div>
+            <div style="overflow-x:auto">
+            <table>
+                <thead><tr><th>Zaman</th><th>Sayfa</th><th>Kullanıcı</th><th>IP</th></tr></thead>
+                <tbody>
+                {% for v in son_ziyaretler %}
+                <tr>
+                    <td style="color:var(--muted);font-size:0.75rem">{{ (v.ts or '')[:16].replace('T',' ') }}</td>
+                    <td>{{ v.page }}</td>
+                    <td style="color:{{ 'var(--gold)' if v.user != 'anonim' else 'var(--muted)' }}">{{ v.user }}</td>
+                    <td style="color:var(--muted)">{{ v.ip }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const gunlukData = {{ gunluk | tojson }};
+const labels = Object.keys(gunlukData);
+const data = Object.values(gunlukData);
+
+const ctx = document.getElementById('gunlukChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: labels.map(l => l.slice(5)),
+        datasets: [{
+            label: 'Ziyaret',
+            data: data,
+            backgroundColor: 'rgba(201,168,76,0.35)',
+            borderColor: 'rgba(201,168,76,0.8)',
+            borderWidth: 2,
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#7a8899', font: { family: 'JetBrains Mono' }, stepSize: 1 } },
+            x: { grid: { display: false }, ticks: { color: '#7a8899' } }
+        }
+    }
+});
+</script>
+</body>
+</html>
