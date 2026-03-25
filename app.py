@@ -5,7 +5,6 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 import yfinance as yf
 import pandas as pd
-import pandas_ta as ta
 from openai import OpenAI
 from datetime import datetime
 
